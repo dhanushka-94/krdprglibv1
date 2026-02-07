@@ -75,6 +75,45 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Deploy on Vercel
+
+1. **Push your code to GitHub** (you already have `https://github.com/dhanushka-94/krdprglibv1`).
+
+2. **Import the project on Vercel**
+   - Go to [vercel.com](https://vercel.com) and sign in (e.g. with GitHub).
+   - Click **Add New… → Project**, select the repo `krdprglibv1`.
+   - Leave **Framework Preset** as Next.js and **Root Directory** as `.` → **Deploy** (it will fail until env vars are set).
+
+3. **Set environment variables**  
+   In the project → **Settings → Environment Variables**, add (for **Production**, and optionally Preview):
+
+   | Name | Notes |
+   |------|--------|
+   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+   | `JWT_SECRET` | Strong random string (e.g. `openssl rand -base64 32`) |
+   | `NEXT_PUBLIC_ADMIN_PATH` | Your admin path (e.g. `k7x9p2`) |
+   | `NEXT_PUBLIC_APP_URL` | Your Vercel URL, e.g. `https://your-app.vercel.app` (or custom domain) |
+   | `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase web config |
+   | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase web config |
+   | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase web config |
+   | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase web config |
+   | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase web config |
+   | `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase web config |
+   | `FIREBASE_SERVICE_ACCOUNT_JSON` | **Required for uploads.** Paste the **entire** JSON from your Firebase service account key file (single line or multi-line). On Vercel you cannot use a file path. |
+
+4. **Supabase Auth URLs**  
+   In Supabase Dashboard → Authentication → URL Configuration:
+   - **Site URL**: `https://your-app.vercel.app` (or your custom domain)
+   - **Redirect URLs**: add `https://your-app.vercel.app/**` (and your custom domain if you use one)
+
+5. **Redeploy**  
+   Vercel → **Deployments** → ⋮ on the latest → **Redeploy** (or push a new commit).
+
+Your app will be live at `https://your-app.vercel.app`. Admin: `https://your-app.vercel.app/{NEXT_PUBLIC_ADMIN_PATH}`.
+
+**Note:** Vercel serverless has a request body limit (~4.5 MB on Hobby). Uploading large MP3s via the app’s upload API may hit that limit; for very large files consider client-side upload to Firebase or upgrading the plan.
+
 ## Structure
 
 **Public (no login):**
