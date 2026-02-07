@@ -205,7 +205,7 @@ export default function SettingsPage() {
               Branding &amp; footer
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              System name appears in the header when no logo is set. Upload logo/favicon (max 2MB) or paste URLs. Footer supports <code className="rounded bg-muted px-1">{"{year}"}</code>.
+              System name and logo both appear in the admin and public headers. Upload logo/favicon (max 2MB) or paste URLs. Footer supports <code className="rounded bg-muted px-1">{"{year}"}</code>.
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
