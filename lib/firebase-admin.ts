@@ -5,11 +5,17 @@ import { getStorage } from "firebase-admin/storage";
 
 let adminApp: App | null = null;
 
-function getServiceAccount() {
+type ServiceAccountCred = {
+  project_id?: string;
+  private_key?: string;
+  [key: string]: unknown;
+};
+
+function getServiceAccount(): ServiceAccountCred | null {
   const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (json) {
     try {
-      return JSON.parse(json) as Parameters<typeof cert>[0];
+      return JSON.parse(json) as ServiceAccountCred;
     } catch {
       return null;
     }
@@ -21,7 +27,7 @@ function getServiceAccount() {
     try {
       const absPath = resolve(process.cwd(), path);
       const data = readFileSync(absPath, "utf-8");
-      return JSON.parse(data) as Parameters<typeof cert>[0];
+      return JSON.parse(data) as ServiceAccountCred;
     } catch {
       return null;
     }
@@ -45,7 +51,7 @@ export function getAdminStorage() {
         process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
         `${serviceAccount.project_id}.appspot.com`;
       adminApp = initializeApp({
-        credential: cert(serviceAccount),
+        credential: cert(serviceAccount as Parameters<typeof cert>[0]),
         storageBucket: bucketName,
       });
     } else {

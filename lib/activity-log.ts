@@ -17,7 +17,10 @@ export type ActivityAction =
   | "user_create"
   | "user_update"
   | "user_delete"
-  | "settings_update";
+  | "settings_update"
+  | "radio_channel_create"
+  | "radio_channel_update"
+  | "radio_channel_delete";
 
 export interface ActivityLogParams {
   userId?: string | null;
