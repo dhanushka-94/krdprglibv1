@@ -1,0 +1,5 @@
+node_modules
+.next
+.env*.local
+*-firebase-adminsdk-*.json
+.DS_Store
