@@ -402,16 +402,16 @@ export function ProgrammesList() {
                     </Link>
                   </div>
 
-                  {/* 3rd highlight: Description (3 lines) + Read more */}
+                  {/* 3rd highlight: Description (3 lines, justified) + Read more */}
                   <div className="px-4 pb-3">
                     {hasLongDescription ? (
                       <>
-                        <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                        <p className="text-sm text-muted-foreground leading-relaxed text-justify line-clamp-3">
                           {p.description!.trim()}
                         </p>
                         <Link
                           href={`/programmes/${p.slug}`}
-                          className="mt-1.5 inline-block text-sm font-medium text-primary hover:underline"
+                          className="mt-1 inline-block text-sm font-medium text-primary hover:underline"
                         >
                           Read more →
                         </Link>
@@ -460,7 +460,7 @@ export function ProgrammesList() {
                       href={`/programmes/${p.slug}`}
                       className="text-xs font-medium text-primary hover:underline"
                     >
-                      View & full player →
+                      Open programme →
                     </Link>
                     <ShareDownloadButtons
                       title={p.title}

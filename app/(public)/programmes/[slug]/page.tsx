@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, Radio } from "lucide-react";
+import { ArrowLeft, Clock, Radio, CalendarDays } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getSession } from "@/lib/auth-session";
 import { getAdminPath } from "@/lib/config";
@@ -71,10 +71,14 @@ export default async function ProgrammeDetailPage({ params }: Props) {
   const backHref = session ? getAdminPath("programmes") : "/";
   const backLabel = session ? "Back to manage programmes" : "View all programmes";
   const dateStr = formatDateOnlyDisplay(programme.broadcasted_date) || programme.broadcasted_date;
+  const repeatDateStr = programme.repeat_broadcasted_date
+    ? formatDateOnlyDisplay(programme.repeat_broadcasted_date) || programme.repeat_broadcasted_date
+    : null;
   const durationStr = formatDurationSeconds(programme.duration_seconds);
+  const categoryLabel = [category?.name, subcategory?.name].filter(Boolean).join(" · ") || "Programme";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm">
         <Link
           href={backHref}
@@ -84,51 +88,33 @@ export default async function ProgrammeDetailPage({ params }: Props) {
           {backLabel}
         </Link>
         <span className="text-muted-foreground">/</span>
-        <span className="truncate text-muted-foreground" title={programme.title}>
+        <span className="truncate text-muted-foreground max-w-[200px] sm:max-w-xs" title={programme.title}>
           {programme.title}
         </span>
       </nav>
 
-      <article className="max-w-2xl space-y-8">
+      <article className="max-w-2xl space-y-6 sm:space-y-8">
+        {/* 1st highlight: Category + Broadcasted date */}
+        <div className="rounded-xl border border-border/60 bg-primary/10 px-4 py-3">
+          <p className="text-sm font-semibold text-foreground">
+            {categoryLabel}
+            {dateStr ? ` · ${dateStr}` : ""}
+          </p>
+        </div>
+
+        {/* 2nd highlight: Programme title */}
         <header>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl leading-tight">
             {programme.title}
           </h1>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            {dateStr && <span>{dateStr}</span>}
-            {category?.name && <span>{category.name}</span>}
-            {subcategory?.name && <span>{subcategory.name}</span>}
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
             {durationStr && (
-              <span className="inline-flex items-center gap-1">
-                <Clock className="size-3.5" />
+              <span className="inline-flex items-center gap-1.5">
+                <Clock className="size-4 shrink-0" />
                 {durationStr}
               </span>
             )}
           </div>
-          {radioChannel && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-3 py-2">
-              {radioChannel.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={radioChannel.logo_url}
-                  alt=""
-                  className="size-8 rounded-full object-cover shrink-0"
-                />
-              ) : (
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                  <Radio className="size-4 text-muted-foreground" />
-                </span>
-              )}
-              <div className="min-w-0">
-                <p className="font-medium text-foreground">{radioChannel.name}</p>
-                {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).join(" · ")}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
           <ShareDownloadButtons
             title={programme.title}
             slug={programme.slug}
@@ -136,21 +122,67 @@ export default async function ProgrammeDetailPage({ params }: Props) {
           />
         </header>
 
-        <ProgrammePlayer url={programme.firebase_storage_url} />
+        {/* Audio player – prominent card */}
+        <section className="rounded-xl border border-border/60 bg-card p-4 sm:p-5 shadow-sm" aria-label="Audio player">
+          <ProgrammePlayer url={programme.firebase_storage_url} />
+        </section>
 
+        {/* 3rd highlight: Description */}
         {programme.description && (
           <section className="rounded-xl border border-border/60 bg-muted/20 p-4 sm:p-5">
-            <h2 className="text-sm font-semibold text-foreground">Description</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
+            <h2 className="text-base font-semibold text-foreground mb-3">Description</h2>
+            <p className="whitespace-pre-wrap text-sm sm:text-base text-muted-foreground leading-relaxed">
               {programme.description}
             </p>
           </section>
         )}
 
+        {/* 4th highlight: Repeat broadcast date */}
+        {repeatDateStr && (
+          <section className="rounded-xl border border-border/60 bg-muted/40 px-4 py-3">
+            <p className="text-sm font-medium text-foreground inline-flex items-center gap-2">
+              <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
+              Repeat broadcast: {repeatDateStr}
+            </p>
+          </section>
+        )}
+
+        {/* 5th highlight: Radio channel */}
+        {radioChannel && (
+          <section className="rounded-xl border border-border/60 bg-muted/40 p-4" aria-label="Broadcast channel">
+            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Broadcast on
+            </h2>
+            <div className="flex items-center gap-3">
+              {radioChannel.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={radioChannel.logo_url}
+                  alt=""
+                  className="size-12 rounded-full object-cover shrink-0 border border-border/60"
+                />
+              ) : (
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted border border-border/60">
+                  <Radio className="size-6 text-muted-foreground" />
+                </span>
+              )}
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground">{radioChannel.name}</p>
+                {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).length > 0 && (
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).join(" · ")}
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Back link */}
         <div className="border-t border-border/60 pt-6">
           <Link
             href={backHref}
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
           >
             <ArrowLeft className="size-4" />
             {backLabel}
