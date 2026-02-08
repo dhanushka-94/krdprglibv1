@@ -12,7 +12,7 @@ type ServiceAccountCred = {
 };
 
 function getServiceAccount(): ServiceAccountCred | null {
-  const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
   if (json) {
     try {
       return JSON.parse(json) as ServiceAccountCred;
@@ -33,6 +33,23 @@ function getServiceAccount(): ServiceAccountCred | null {
     }
   }
   return null;
+}
+
+/** Returns a short reason why Firebase Admin is not available (for error messages). */
+export function getAdminStorageFailureReason(): string {
+  const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+  if (!json) {
+    return "FIREBASE_SERVICE_ACCOUNT_JSON is not set in Vercel Environment Variables. Add it (Settings → Environment Variables), paste the full JSON from your service account key, then redeploy.";
+  }
+  try {
+    const parsed = JSON.parse(json) as ServiceAccountCred;
+    if (!parsed.project_id || !parsed.private_key) {
+      return "FIREBASE_SERVICE_ACCOUNT_JSON is set but missing project_id or private_key. Paste the complete JSON from your Firebase service account key file.";
+    }
+  } catch {
+    return "FIREBASE_SERVICE_ACCOUNT_JSON is set but invalid JSON. Paste the exact contents of your service account key file as one line (no extra quotes around the whole value).";
+  }
+  return "Firebase Admin failed to initialize. Check that the JSON is correct and redeploy.";
 }
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;

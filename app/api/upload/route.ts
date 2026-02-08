@@ -77,11 +77,11 @@ export async function POST(request: Request) {
 
     const bucket = getAdminStorage();
     if (!bucket) {
-      console.error("Firebase Admin Storage not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_PATH.");
+      console.error("Firebase Admin Storage not configured.");
       return NextResponse.json(
         {
           error: "Upload not configured",
-          details: "Server-side upload requires a Firebase service account. Set FIREBASE_SERVICE_ACCOUNT_JSON (JSON string) or FIREBASE_SERVICE_ACCOUNT_PATH (path to JSON file) in your environment.",
+          details: "On Vercel: set FIREBASE_SERVICE_ACCOUNT_JSON to the full JSON from your Firebase service account key file. File path is not available in serverless.",
         },
         { status: 503 }
       );

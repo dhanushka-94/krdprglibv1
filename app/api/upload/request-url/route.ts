@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { AUDIO_BUCKET_PATH } from "@/lib/firebase";
-import { getAdminStorage } from "@/lib/firebase-admin";
+import { getAdminStorage, getAdminStorageFailureReason } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/auth";
 import { buildProgrammeFilename } from "@/lib/upload-utils";
 
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "Upload not configured",
-          details: "Set FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_SERVICE_ACCOUNT_PATH.",
+          details: getAdminStorageFailureReason(),
         },
         { status: 503 }
       );
