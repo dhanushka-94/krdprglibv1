@@ -35,6 +35,8 @@ function getServiceAccount(): ServiceAccountCred | null {
   return null;
 }
 
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
 export function getAdminStorage() {
   if (adminApp) {
     return getStorage(adminApp).bucket();
@@ -58,6 +60,21 @@ export function getAdminStorage() {
       adminApp = getApps()[0] as App;
     }
     return getStorage(adminApp).bucket();
+  } catch {
+    return null;
+  }
+}
+
+/** Get a signed read URL for a storage path (e.g. after client direct upload). */
+export async function getSignedReadUrl(storagePath: string): Promise<string | null> {
+  const bucket = getAdminStorage();
+  if (!bucket) return null;
+  try {
+    const [url] = await bucket.file(storagePath).getSignedUrl({
+      action: "read",
+      expires: Date.now() + ONE_YEAR_MS,
+    });
+    return url;
   } catch {
     return null;
   }

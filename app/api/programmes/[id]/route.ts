@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth";
 import { canUploadTo } from "@/lib/user-assignments";
 import { logActivity } from "@/lib/activity-log";
 import { getSession } from "@/lib/auth-session";
+import { getSignedReadUrl } from "@/lib/firebase-admin";
 
 export async function GET(
   _request: Request,
@@ -121,8 +122,12 @@ export async function PATCH(
     if (body.category_id !== undefined) updates.category_id = body.category_id;
     if (body.subcategory_id !== undefined) updates.subcategory_id = body.subcategory_id;
     if (body.radio_channel_id !== undefined) updates.radio_channel_id = body.radio_channel_id;
-    if (body.firebase_storage_url !== undefined) updates.firebase_storage_url = body.firebase_storage_url;
     if (body.firebase_storage_path !== undefined) updates.firebase_storage_path = body.firebase_storage_path;
+    if (body.firebase_storage_url !== undefined) updates.firebase_storage_url = body.firebase_storage_url;
+    else if (body.firebase_storage_path) {
+      const url = await getSignedReadUrl(body.firebase_storage_path);
+      if (url) updates.firebase_storage_url = url;
+    }
     if (body.file_size_bytes !== undefined) updates.file_size_bytes = body.file_size_bytes;
     if (body.seo_title !== undefined) updates.seo_title = body.seo_title;
     if (body.seo_description !== undefined) updates.seo_description = body.seo_description;

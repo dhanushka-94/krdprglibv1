@@ -4,6 +4,7 @@ import { slugify } from "@/lib/validations";
 import { requireAuth } from "@/lib/auth";
 import { canUploadTo, getUserAssignments } from "@/lib/user-assignments";
 import { logActivity } from "@/lib/activity-log";
+import { getSignedReadUrl } from "@/lib/firebase-admin";
 
 export async function GET(request: Request) {
   try {
@@ -93,6 +94,12 @@ export async function POST(request: Request) {
     const rawSlug = body.slug || slugify(title);
     const slug = rawSlug || `p-${Date.now().toString(36)}`;
 
+    let firebaseStorageUrl = body.firebase_storage_url ?? null;
+    const firebaseStoragePath = body.firebase_storage_path ?? null;
+    if (firebaseStoragePath && !firebaseStorageUrl) {
+      firebaseStorageUrl = await getSignedReadUrl(firebaseStoragePath);
+    }
+
     const { data, error } = await supabase
       .from("audio_programmes")
       .insert({
@@ -104,8 +111,8 @@ export async function POST(request: Request) {
         category_id: body.category_id || null,
         subcategory_id: body.subcategory_id || null,
         radio_channel_id: body.radio_channel_id || null,
-        firebase_storage_url: body.firebase_storage_url,
-        firebase_storage_path: body.firebase_storage_path,
+        firebase_storage_url: firebaseStorageUrl,
+        firebase_storage_path: firebaseStoragePath,
         file_size_bytes: body.file_size_bytes ?? null,
         duration_seconds: body.duration_seconds ?? null,
         seo_title: body.seo_title || null,

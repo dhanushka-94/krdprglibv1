@@ -119,54 +119,47 @@ export default function UploadPage() {
     setUploadStatus("uploading");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
       const categoryName = filteredCategories.find((c) => c.id === categoryId)?.name ?? "";
       const subcategoryName = filteredSubcategories.find((s) => s.id === subcategoryId)?.name ?? "";
-      formData.append("category_name", categoryName);
-      formData.append("subcategory_name", subcategoryName);
-      formData.append("broadcasted_date", broadcastedDate);
 
-      const uploadData = await new Promise<{ url?: string; path?: string; file_size_bytes?: number; error?: string; details?: string }>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percent);
-          } else {
-            setUploadProgress((p) => Math.min(p + 10, 90));
-          }
-        };
-
-        xhr.onload = () => {
-          try {
-            const data = JSON.parse(xhr.responseText || "{}");
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve(data);
-            } else {
-              resolve(data);
-            }
-          } catch {
-            reject(new Error("Invalid response"));
-          }
-        };
-
-        xhr.onerror = () => reject(new Error("Upload failed"));
-        xhr.ontimeout = () => reject(new Error("Upload timed out"));
-
-        xhr.open("POST", "/api/upload");
-        xhr.withCredentials = true;
-        xhr.send(formData);
+      const urlRes = await fetch("/api/upload/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          category_name: categoryName,
+          subcategory_name: subcategoryName,
+          broadcasted_date: broadcastedDate,
+        }),
       });
-
-      if (uploadData.error) {
-        const msg = uploadData.details ? `${uploadData.error}: ${uploadData.details}` : (uploadData.error || "Upload failed");
-        toast.error(msg);
+      const urlData = await urlRes.json();
+      if (!urlRes.ok || urlData.error) {
+        toast.error(urlData.error || urlData.details || "Failed to get upload URL");
         setSubmitting(false);
         setUploadStatus("idle");
         return;
       }
+      const { uploadUrl, path } = urlData;
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            setUploadProgress(Math.round((event.loaded / event.total) * 100));
+          } else {
+            setUploadProgress((p) => Math.min(p + 10, 90));
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(xhr.statusText || "Upload failed"));
+        };
+        xhr.onerror = () => reject(new Error("Upload failed"));
+        xhr.ontimeout = () => reject(new Error("Upload timed out"));
+        xhr.open("PUT", uploadUrl);
+        xhr.setRequestHeader("Content-Type", "audio/mpeg");
+        xhr.send(file);
+      });
 
       setUploadProgress(100);
       setUploadStatus("saving");
@@ -177,6 +170,7 @@ export default function UploadPage() {
       const progRes = await fetch("/api/programmes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           title: title.trim(),
           slug,
@@ -186,9 +180,8 @@ export default function UploadPage() {
           category_id: categoryId || null,
           subcategory_id: subcategoryId || null,
           radio_channel_id: radioChannelId || null,
-          firebase_storage_url: uploadData.url,
-          firebase_storage_path: uploadData.path,
-          file_size_bytes: uploadData.file_size_bytes,
+          firebase_storage_path: path,
+          file_size_bytes: file.size,
           seo_title: seoTitle.trim() || null,
           seo_description: seoDescription.trim() || null,
           seo_keywords: seoKeywords.trim() || null,
@@ -200,8 +193,8 @@ export default function UploadPage() {
         toast.success("Programme uploaded");
         router.push(`/programmes/${progData.slug}`);
       } else toast.error(progData.error || "Failed to save programme");
-    } catch {
-      toast.error("An error occurred");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setSubmitting(false);
       setUploadStatus("idle");
