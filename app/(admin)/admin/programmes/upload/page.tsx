@@ -134,7 +134,8 @@ export default function UploadPage() {
       });
       const urlData = await urlRes.json();
       if (!urlRes.ok || urlData.error) {
-        toast.error(urlData.error || urlData.details || "Failed to get upload URL");
+        const msg = [urlData.error, urlData.details].filter(Boolean).join(" — ") || "Failed to get upload URL";
+        toast.error(msg);
         setSubmitting(false);
         setUploadStatus("idle");
         return;
@@ -212,6 +213,23 @@ export default function UploadPage() {
           <p className="text-sm text-muted-foreground">
             MP3 only, max 100MB. All metadata is saved to Supabase.
           </p>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const r = await fetch("/api/upload/check-config", { credentials: "include" });
+                const d = await r.json();
+                const line = d.ok ? "Upload is configured." : d.reason;
+                const debug = d.debug ? ` (env set: ${d.debug.envSet}, parse: ${d.debug.parseOk}, project_id: ${d.debug.hasProjectId}, private_key: ${d.debug.hasPrivateKey}, init: ${d.debug.initOk})` : "";
+                toast(line + debug);
+              } catch {
+                toast.error("Could not check config");
+              }
+            }}
+            className="text-xs text-muted-foreground underline hover:text-foreground"
+          >
+            Upload not working? Check config
+          </button>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">

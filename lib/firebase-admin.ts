@@ -12,20 +12,27 @@ type ServiceAccountCred = {
 };
 
 function getServiceAccount(): ServiceAccountCred | null {
-  const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
-  if (json) {
-    try {
-      return JSON.parse(json) as ServiceAccountCred;
-    } catch {
-      return null;
+  let json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+  if (!json) return null;
+  try {
+    return JSON.parse(json) as ServiceAccountCred;
+  } catch {
+    if (json.startsWith('"') && json.endsWith('"')) {
+      try {
+        const unwrapped = JSON.parse(json) as string;
+        return JSON.parse(unwrapped) as ServiceAccountCred;
+      } catch {
+        return null;
+      }
     }
+    return null;
   }
   const path =
     process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
     process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (path) {
     try {
-      const absPath = resolve(process.cwd(), path);
+      const absPath = resolve(process.cwd(), path as string);
       const data = readFileSync(absPath, "utf-8");
       return JSON.parse(data) as ServiceAccountCred;
     } catch {

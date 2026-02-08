@@ -156,7 +156,8 @@ export default function EditProgrammePage() {
         });
         const urlData = await urlRes.json();
         if (!urlRes.ok || urlData.error) {
-          toast.error(urlData.error || urlData.details || "Failed to get upload URL");
+          const msg = [urlData.error, urlData.details].filter(Boolean).join(" — ") || "Failed to get upload URL";
+          toast.error(msg);
           setSubmitting(false);
           return;
         }
