@@ -92,7 +92,6 @@ Open [http://localhost:3000](http://localhost:3000).
    | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
    | `JWT_SECRET` | Strong random string (e.g. `openssl rand -base64 32`) |
-   | `NEXT_PUBLIC_ADMIN_PATH` | Your admin path (e.g. `k7x9p2`) |
    | `NEXT_PUBLIC_APP_URL` | Your Vercel URL, e.g. `https://your-app.vercel.app` (or custom domain) |
    | `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase web config |
    | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase web config |
@@ -110,7 +109,7 @@ Open [http://localhost:3000](http://localhost:3000).
 5. **Redeploy**  
    Vercel → **Deployments** → ⋮ on the latest → **Redeploy** (or push a new commit).
 
-Your app will be live at `https://your-app.vercel.app`. Admin: `https://your-app.vercel.app/{NEXT_PUBLIC_ADMIN_PATH}`.
+Your app will be live at `https://your-app.vercel.app`. Admin: `https://your-app.vercel.app/admin`.
 
 **Note:** Vercel serverless has a request body limit (~4.5 MB on Hobby). Uploading large MP3s via the app’s upload API may hit that limit; for very large files consider client-side upload to Firebase or upgrading the plan.
 
@@ -121,14 +120,12 @@ Your app will be live at `https://your-app.vercel.app`. Admin: `https://your-app
 - `/programmes` – Same programmes list
 - `/programmes/[slug]` – Programme detail with audio player & SEO
 
-**Admin (login required, obfuscated path):**
-- `/{ADMIN_PATH}` – Dashboard (default: `/k7x9p2`)
-- `/{ADMIN_PATH}/categories` – Category CRUD
-- `/{ADMIN_PATH}/subcategories` – Subcategory CRUD
-- `/{ADMIN_PATH}/programmes` – Programme list & filters
-- `/{ADMIN_PATH}/programmes/upload` – Upload new programme
-
-Set `NEXT_PUBLIC_ADMIN_PATH` in `.env.local` to customize the admin URL. Direct `/admin` access is blocked.
+**Admin (login required):**
+- `/admin` – Dashboard
+- `/admin/categories` – Category CRUD
+- `/admin/subcategories` – Subcategory CRUD
+- `/admin/programmes` – Programme list & filters
+- `/admin/programmes/upload` – Upload new programme
 
 **Password reset (no email service):**
 - **Change password (logged in):** My profile → Change password (current + new password).

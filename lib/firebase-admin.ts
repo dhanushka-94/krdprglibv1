@@ -12,21 +12,26 @@ type ServiceAccountCred = {
 };
 
 function getServiceAccount(): ServiceAccountCred | null {
-  let json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
-  if (!json) return null;
-  try {
-    return JSON.parse(json) as ServiceAccountCred;
-  } catch {
-    if (json.startsWith('"') && json.endsWith('"')) {
-      try {
-        const unwrapped = JSON.parse(json) as string;
-        return JSON.parse(unwrapped) as ServiceAccountCred;
-      } catch {
+  // 1. Try FIREBASE_SERVICE_ACCOUNT_JSON (used on Vercel / serverless)
+  const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+  if (json) {
+    try {
+      return JSON.parse(json) as ServiceAccountCred;
+    } catch {
+      if (json.startsWith('"') && json.endsWith('"')) {
+        try {
+          const unwrapped = JSON.parse(json) as string;
+          return JSON.parse(unwrapped) as ServiceAccountCred;
+        } catch {
+          // fall through to path
+        }
+      } else {
         return null;
       }
     }
-    return null;
   }
+
+  // 2. Try FIREBASE_SERVICE_ACCOUNT_PATH (used locally)
   const path =
     process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
     process.env.GOOGLE_APPLICATION_CREDENTIALS;
@@ -45,18 +50,25 @@ function getServiceAccount(): ServiceAccountCred | null {
 /** Returns a short reason why Firebase Admin is not available (for error messages). */
 export function getAdminStorageFailureReason(): string {
   const json = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
-  if (!json) {
-    return "FIREBASE_SERVICE_ACCOUNT_JSON is not set in Vercel Environment Variables. Add it (Settings → Environment Variables), paste the full JSON from your service account key, then redeploy.";
+  const path = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || process.env.GOOGLE_APPLICATION_CREDENTIALS;
+
+  if (!json && !path) {
+    return "Firebase Admin not configured. Locally: set FIREBASE_SERVICE_ACCOUNT_PATH to the path of your service account JSON file. On Vercel: set FIREBASE_SERVICE_ACCOUNT_JSON to the full JSON from your Firebase service account key.";
   }
-  try {
-    const parsed = JSON.parse(json) as ServiceAccountCred;
-    if (!parsed.project_id || !parsed.private_key) {
-      return "FIREBASE_SERVICE_ACCOUNT_JSON is set but missing project_id or private_key. Paste the complete JSON from your Firebase service account key file.";
+  if (json) {
+    try {
+      const parsed = JSON.parse(json) as ServiceAccountCred;
+      if (!parsed.project_id || !parsed.private_key) {
+        return "FIREBASE_SERVICE_ACCOUNT_JSON is set but missing project_id or private_key. Paste the complete JSON from your Firebase service account key file.";
+      }
+    } catch {
+      return "FIREBASE_SERVICE_ACCOUNT_JSON is set but invalid JSON. Paste the exact contents of your service account key file as one line (no extra quotes around the whole value).";
     }
-  } catch {
-    return "FIREBASE_SERVICE_ACCOUNT_JSON is set but invalid JSON. Paste the exact contents of your service account key file as one line (no extra quotes around the whole value).";
   }
-  return "Firebase Admin failed to initialize. Check that the JSON is correct and redeploy.";
+  if (path) {
+    return `FIREBASE_SERVICE_ACCOUNT_PATH is set to "${path}" but the file could not be read or parsed. Ensure the file exists at that path and contains valid JSON.`;
+  }
+  return "Firebase Admin failed to initialize. Check that the credentials are correct.";
 }
 
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;

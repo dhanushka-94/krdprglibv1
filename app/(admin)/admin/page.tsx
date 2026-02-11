@@ -11,6 +11,7 @@ import {
   Activity,
   FileUp,
   ChevronRight,
+  FlaskConical,
 } from "lucide-react";
 import { getSession } from "@/lib/auth-session";
 import { supabase } from "@/lib/supabase";
@@ -326,6 +327,28 @@ export default async function AdminDashboard() {
             </CardContent>
           </Card>
         </Link>
+
+        {isAdmin && (
+          <Link href={getAdminPath("upload-test")}>
+            <Card className={dashboardCardClass}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <FlaskConical className="size-5 text-primary" />
+                  Upload Test
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Test MP3 upload to Firebase.
+                </p>
+                <Button size="sm" className="w-full" variant="outline">
+                  <FlaskConical className="mr-2 size-4" />
+                  Test
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
       </div>
 
       {/* Recent content */}

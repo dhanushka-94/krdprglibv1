@@ -24,8 +24,7 @@ const FALLBACK_SUBTITLE = "All Radio Programmes Library";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH ?? "k7x9p2";
-  const redirect = searchParams.get("redirect") ?? `/${adminPath}`;
+  const redirect = searchParams.get("redirect") ?? "/admin";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

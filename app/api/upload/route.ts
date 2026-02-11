@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { AUDIO_BUCKET_PATH, MAX_FILE_SIZE_BYTES } from "@/lib/firebase";
-import { getAdminStorage } from "@/lib/firebase-admin";
+import { getAdminStorage, getAdminStorageFailureReason } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/auth";
 
 const ALLOWED_MIME = "audio/mpeg";
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error: "Upload not configured",
-          details: "On Vercel: set FIREBASE_SERVICE_ACCOUNT_JSON to the full JSON from your Firebase service account key file. File path is not available in serverless.",
+          details: getAdminStorageFailureReason(),
         },
         { status: 503 }
       );

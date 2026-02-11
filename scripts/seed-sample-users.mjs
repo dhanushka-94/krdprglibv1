@@ -33,7 +33,6 @@ async function main() {
     process.exit(1);
   }
 
-  const adminPath = process.env.NEXT_PUBLIC_ADMIN_PATH ?? "k7x9p2";
   console.log("\n--- Sample users ---\n");
 
   for (const u of SAMPLE_USERS) {
@@ -69,7 +68,7 @@ async function main() {
     console.log("");
   }
 
-  console.log(`Login at /${adminPath}/login\n`);
+  console.log("Login at /login\n");
 }
 
 main();
