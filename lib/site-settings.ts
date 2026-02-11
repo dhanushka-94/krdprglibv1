@@ -3,7 +3,6 @@ import { supabase } from "@/lib/supabase";
 export interface PublicSiteSettings {
   system_name: string;
   logo_url: string;
-  favicon_url: string;
   footer_credits: string;
   maintenance_mode: boolean;
 }
@@ -11,13 +10,12 @@ export interface PublicSiteSettings {
 const DEFAULTS: PublicSiteSettings = {
   system_name: "Television and Farm Broadcasting Service – All Radio Programmes Library",
   logo_url: "",
-  favicon_url: "",
   footer_credits: "© {year} Television and Farm Broadcasting Service · Department of Agriculture, Sri Lanka",
   maintenance_mode: false,
 };
 
 export async function getPublicSettings(): Promise<PublicSiteSettings> {
-  const keys = ["system_name", "logo_url", "favicon_url", "footer_credits", "maintenance_mode"];
+  const keys = ["system_name", "logo_url", "footer_credits", "maintenance_mode"];
   const { data, error } = await supabase
     .from("site_settings")
     .select("key, value")
@@ -36,7 +34,6 @@ export async function getPublicSettings(): Promise<PublicSiteSettings> {
   return {
     system_name: (map.system_name && map.system_name.trim()) || DEFAULTS.system_name,
     logo_url: map.logo_url ?? DEFAULTS.logo_url,
-    favicon_url: map.favicon_url ?? DEFAULTS.favicon_url,
     footer_credits: map.footer_credits ?? DEFAULTS.footer_credits,
     maintenance_mode: map.maintenance_mode === "true",
   };

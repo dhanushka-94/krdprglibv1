@@ -20,15 +20,12 @@ export default function SettingsPage() {
   const [importStorageEnabled, setImportStorageEnabled] = useState(true);
   const [systemName, setSystemName] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
-  const [faviconUrl, setFaviconUrl] = useState("");
   const [footerCredits, setFooterCredits] = useState("");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const faviconInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/settings", { credentials: "include" })
@@ -37,7 +34,6 @@ export default function SettingsPage() {
         if (data.import_storage_enabled !== undefined) setImportStorageEnabled(data.import_storage_enabled);
         if (data.system_name !== undefined) setSystemName(data.system_name || "");
         if (data.logo_url !== undefined) setLogoUrl(data.logo_url || "");
-        if (data.favicon_url !== undefined) setFaviconUrl(data.favicon_url || "");
         if (data.footer_credits !== undefined) setFooterCredits(data.footer_credits || "");
         if (data.maintenance_mode !== undefined) setMaintenanceMode(data.maintenance_mode);
       })
@@ -77,7 +73,6 @@ export default function SettingsPage() {
         body: JSON.stringify({
           system_name: systemName.trim(),
           logo_url: logoUrl.trim(),
-          favicon_url: faviconUrl.trim(),
           footer_credits: footerCredits.trim(),
         }),
       });
@@ -85,7 +80,6 @@ export default function SettingsPage() {
       if (res.ok) {
         if (data.system_name !== undefined) setSystemName(data.system_name || "");
         if (data.logo_url !== undefined) setLogoUrl(data.logo_url || "");
-        if (data.favicon_url !== undefined) setFaviconUrl(data.favicon_url || "");
         if (data.footer_credits !== undefined) setFooterCredits(data.footer_credits || "");
         toast.success("Branding and footer saved");
       } else toast.error(data.error || "Failed to update");
@@ -132,42 +126,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleFaviconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image (PNG, ICO, SVG, etc.)");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Favicon must be under 2MB");
-      return;
-    }
-    setUploadingFavicon(true);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("type", "favicon");
-      const res = await fetch("/api/settings/upload-branding", {
-        method: "POST",
-        credentials: "include",
-        body: form,
-      });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        setFaviconUrl(data.url);
-        toast.success("Favicon uploaded. Click Save to apply.");
-      } else {
-        toast.error(data.error || "Upload failed");
-      }
-    } catch {
-      toast.error("Upload failed");
-    } finally {
-      setUploadingFavicon(false);
-      e.target.value = "";
-    }
-  };
-
   const handleMaintenanceChange = async (value: string) => {
     const on = value === "on";
     setSaving(true);
@@ -205,7 +163,7 @@ export default function SettingsPage() {
               Branding &amp; footer
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              System name and logo both appear in the admin and public headers. Upload logo/favicon (max 2MB) or paste URLs. Footer supports <code className="rounded bg-muted px-1">{"{year}"}</code>.
+              System name and logo appear in the admin and public headers. Upload logo (max 2MB) or paste URL. Footer supports <code className="rounded bg-muted px-1">{"{year}"}</code>. Favicon is set to <code className="rounded bg-muted px-1">/favicon.ico</code> (public/favicon.ico).
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -252,43 +210,6 @@ export default function SettingsPage() {
                   <span className="text-xs text-muted-foreground">Preview:</span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={logoUrl} alt="Logo preview" className="h-8 w-auto max-w-[120px] object-contain border rounded" />
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Favicon</Label>
-              <div className="flex flex-wrap items-center gap-3">
-                <input
-                  type="file"
-                  accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml,image/jpeg,image/webp"
-                  className="hidden"
-                  ref={faviconInputRef}
-                  onChange={handleFaviconUpload}
-                  disabled={uploadingFavicon}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => faviconInputRef.current?.click()}
-                  disabled={uploadingFavicon}
-                >
-                  <Upload className="mr-1.5 size-4" />
-                  {uploadingFavicon ? "Uploading…" : "Upload favicon"}
-                </Button>
-              </div>
-              <Input
-                value={faviconUrl}
-                onChange={(e) => setFaviconUrl(e.target.value)}
-                placeholder="Or paste favicon URL"
-                className="mt-1"
-              />
-              {faviconUrl && (
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Preview:</span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={faviconUrl} alt="Favicon preview" className="h-6 w-6 object-contain border rounded" />
                 </div>
               )}
             </div>

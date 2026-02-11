@@ -12,9 +12,12 @@ const ONE_HOUR_MS = 60 * 60 * 1000;
  */
 export async function POST(request: Request) {
   try {
-    const { error: authError } = await requireAuth();
-    if (authError) {
+    const { session, error: authError } = await requireAuth();
+    if (authError || !session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.roleName === "Viewer") {
+      return NextResponse.json({ error: "Viewers cannot upload files" }, { status: 403 });
     }
 
     const bucket = getAdminStorage();

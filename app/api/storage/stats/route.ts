@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ref, list } from "firebase/storage";
 import { storage, AUDIO_BUCKET_PATH } from "@/lib/firebase";
 import { getAdminStorage } from "@/lib/firebase-admin";
-import { requireAdmin } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
 async function countFilesAdmin(): Promise<number> {
@@ -41,12 +41,12 @@ async function countFilesClient(): Promise<number> {
 
 export async function GET() {
   try {
-    const { error: authError } = await requireAdmin();
-    if (authError) {
-      return NextResponse.json(
-        { error: authError === "Forbidden" ? "Admin only" : "Unauthorized" },
-        { status: authError === "Forbidden" ? 403 : 401 }
-      );
+    const { session, error: authError } = await requireAuth();
+    if (authError || !session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.roleName !== "Admin" && session.roleName !== "Programme Manager") {
+      return NextResponse.json({ error: "Admin or Programme Manager only" }, { status: 403 });
     }
 
     let total = 0;

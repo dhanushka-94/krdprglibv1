@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { PublicHeader } from "@/components/public-header";
 import { NowPlayingProvider, useNowPlaying } from "@/lib/now-playing-context";
@@ -39,27 +38,11 @@ export function PublicLayoutClient({
   children,
   systemName,
   logoUrl,
-  faviconUrl,
 }: {
   children: React.ReactNode;
   systemName: string;
   logoUrl: string;
-  faviconUrl: string;
 }) {
-  useEffect(() => {
-    if (!faviconUrl) return;
-    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    if (!link) {
-      link = document.createElement("link");
-      link.rel = "icon";
-      document.head.appendChild(link);
-    }
-    link.href = faviconUrl;
-    return () => {
-      link?.remove();
-    };
-  }, [faviconUrl]);
-
   return (
     <NowPlayingProvider>
       <PublicLayoutInner systemName={systemName} logoUrl={logoUrl}>

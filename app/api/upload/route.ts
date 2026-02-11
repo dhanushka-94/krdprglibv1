@@ -31,9 +31,12 @@ function buildProgrammeFilename(
 
 export async function POST(request: Request) {
   try {
-    const { error: authError } = await requireAuth();
-    if (authError) {
+    const { session, error: authError } = await requireAuth();
+    if (authError || !session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.roleName === "Viewer") {
+      return NextResponse.json({ error: "Viewers cannot upload files" }, { status: 403 });
     }
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -120,9 +123,12 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { error: authError } = await requireAuth();
-    if (authError) {
+    const { session, error: authError } = await requireAuth();
+    if (authError || !session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.roleName === "Viewer") {
+      return NextResponse.json({ error: "Viewers cannot delete files" }, { status: 403 });
     }
     const { searchParams } = new URL(request.url);
     const path = searchParams.get("path");

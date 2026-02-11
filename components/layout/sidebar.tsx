@@ -38,7 +38,6 @@ const navItems = (adminBase: string): NavItem[] => [
     href: `${adminBase}/import-storage`,
     label: "Import from Storage",
     icon: FileUp,
-    adminOnly: true,
     settingKey: "import_storage_enabled",
   },
   { href: `${adminBase}/categories`, label: "Categories", icon: FolderTree, adminOnly: true },
@@ -82,6 +81,8 @@ export function Sidebar({ mobileOpen: controlledOpen, onClose }: SidebarProps = 
   const items = navItems(adminBase).filter((item) => {
     if ("adminOnly" in item && item.adminOnly && role !== "Admin") return false;
     if ("href" in item && item.href?.includes("/upload") && role === "Viewer") return false;
+    // Hide Import from Storage for Viewer role
+    if ("href" in item && item.href?.includes("/import-storage") && role === "Viewer") return false;
     if ("settingKey" in item && item.settingKey === "import_storage_enabled") {
       if (settings.import_storage_enabled === false) return false;
     }

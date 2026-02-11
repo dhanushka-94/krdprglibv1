@@ -32,7 +32,6 @@ import { slugify } from "@/lib/validations";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/date-picker";
-import { AdminOnlyGuard } from "@/components/admin-only-guard";
 import { getAdminPath } from "@/lib/config";
 import { Play, Pencil, RefreshCw, ChevronLeft, ChevronRight, Search, Settings } from "lucide-react";
 import { AudioPlayer } from "@/components/audio-player";
@@ -46,15 +45,21 @@ interface StorageFile {
 }
 
 export default function ImportStoragePage() {
-  return (
-    <AdminOnlyGuard>
-      <ImportStorageGuard />
-    </AdminOnlyGuard>
-  );
+  return <ImportStorageGuard />;
 }
 
 function ImportStorageGuard() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setRole(data?.user?.role ?? null))
+      .catch(() => setRole(null))
+      .finally(() => setAuthChecked(true));
+  }, []);
 
   useEffect(() => {
     fetch("/api/settings", { credentials: "include" })
@@ -63,10 +68,25 @@ function ImportStorageGuard() {
       .catch(() => setEnabled(true));
   }, []);
 
-  if (enabled === null) {
+  if (!authChecked || enabled === null) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!role || (role !== "Admin" && role !== "Programme Manager")) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 p-4 sm:p-8">
+        <p className="text-center text-muted-foreground">
+          This page is only available to Admin and Programme Manager roles.
+        </p>
+        <Button asChild variant="outline">
+          <Link href={getAdminPath("programmes")}>
+            Back to Manage Programmes
+          </Link>
+        </Button>
       </div>
     );
   }

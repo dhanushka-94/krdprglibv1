@@ -17,7 +17,6 @@ export default async function PublicLayout({
     <PublicLayoutClient
       systemName={settings.system_name}
       logoUrl={settings.logo_url}
-      faviconUrl={settings.favicon_url}
     >
       {children}
     </PublicLayoutClient>

@@ -25,7 +25,6 @@ export async function GET() {
       import_storage_enabled: settings.import_storage_enabled !== "false",
       system_name: settings.system_name ?? "Television and Farm Broadcasting Service – All Radio Programmes Library",
       logo_url: settings.logo_url ?? "",
-      favicon_url: settings.favicon_url ?? "",
       footer_credits: settings.footer_credits ?? "",
       maintenance_mode: settings.maintenance_mode === "true",
     });
@@ -56,9 +55,6 @@ export async function PATCH(request: Request) {
     }
     if (typeof body.logo_url === "string") {
       updates.push({ key: "logo_url", value: body.logo_url.trim() });
-    }
-    if (typeof body.favicon_url === "string") {
-      updates.push({ key: "favicon_url", value: body.favicon_url.trim() });
     }
     if (typeof body.footer_credits === "string") {
       updates.push({ key: "footer_credits", value: body.footer_credits.trim() });
@@ -103,7 +99,6 @@ export async function PATCH(request: Request) {
       import_storage_enabled: settings.import_storage_enabled !== "false",
       system_name: settings.system_name ?? "Television and Farm Broadcasting Service – All Radio Programmes Library",
       logo_url: settings.logo_url ?? "",
-      favicon_url: settings.favicon_url ?? "",
       footer_credits: settings.footer_credits ?? "",
       maintenance_mode: settings.maintenance_mode === "true",
     });

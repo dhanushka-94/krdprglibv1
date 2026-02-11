@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPublicSettings } from "@/lib/site-settings";
 
-/** Public endpoint: no auth. Returns logo, favicon, footer credits, maintenance mode. */
+/** Public endpoint: no auth. Returns logo, footer credits, maintenance mode. */
 export async function GET() {
   try {
     const settings = await getPublicSettings();
@@ -12,7 +12,6 @@ export async function GET() {
       {
         system_name: "Television and Farm Broadcasting Service – All Radio Programmes Library",
         logo_url: "",
-        favicon_url: "",
         footer_credits: "",
         maintenance_mode: false,
       },

@@ -20,6 +20,7 @@ export const metadata: Metadata = {
     : undefined,
   title: "Television and Farm Broadcasting Service – All Radio Programmes Library",
   description: "Browse and listen to radio programmes. Department of Agriculture, Sri Lanka.",
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({

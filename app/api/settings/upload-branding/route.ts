@@ -33,8 +33,8 @@ export async function POST(request: Request) {
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
-    if (type !== "logo" && type !== "favicon") {
-      return NextResponse.json({ error: "type must be logo or favicon" }, { status: 400 });
+    if (type !== "logo") {
+      return NextResponse.json({ error: "type must be logo" }, { status: 400 });
     }
     if (file.size > MAX_BYTES) {
       return NextResponse.json(
