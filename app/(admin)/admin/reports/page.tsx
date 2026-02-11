@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileBarChart2, FileDown, Activity, Music } from "lucide-react";
+import { FileBarChart2, FileDown, Activity, Music, Users } from "lucide-react";
 import { formatDateOnlyDisplay } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 import type { Category, Subcategory, RadioChannel } from "@/lib/types";
@@ -98,7 +98,7 @@ export default function ReportsPage() {
 }
 
 function ReportsContent() {
-  const [activeTab, setActiveTab] = useState<"activity" | "programme">("activity");
+  const [activeTab, setActiveTab] = useState<"activity" | "programme" | "users">("activity");
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -108,11 +108,11 @@ function ReportsContent() {
           Reports
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Generate and export activity and programme reports
+          Generate and export activity, programme, and user reports
         </p>
       </div>
 
-      <div className="mb-6 flex gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         <Button
           variant={activeTab === "activity" ? "default" : "outline"}
           onClick={() => setActiveTab("activity")}
@@ -129,10 +129,19 @@ function ReportsContent() {
           <Music className="size-4" />
           Programme Report
         </Button>
+        <Button
+          variant={activeTab === "users" ? "default" : "outline"}
+          onClick={() => setActiveTab("users")}
+          className="gap-2"
+        >
+          <Users className="size-4" />
+          Users Report
+        </Button>
       </div>
 
       {activeTab === "activity" && <ActivityReport />}
       {activeTab === "programme" && <ProgrammeReport />}
+      {activeTab === "users" && <UsersReport />}
     </div>
   );
 }
@@ -298,6 +307,122 @@ function ActivityReport() {
         {!loading && logs.length > 0 && (
           <p className="mt-4 text-sm text-muted-foreground">
             {logs.length} record(s). Max 2,000 for export.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface UserReportRow {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+  programmes_uploaded: number;
+  activity_count: number;
+}
+
+function UsersReport() {
+  const [rows, setRows] = useState<UserReportRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/reports/users", { credentials: "include" });
+      const data = await res.json();
+      if (res.ok) setRows(Array.isArray(data) ? data : []);
+      else setRows([]);
+    } catch {
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const exportCsv = () => {
+    const headers = ["Email", "Name", "Role", "Active", "Programmes Uploaded", "Activity Count", "Created"];
+    const rowsCsv = rows.map((r) => [
+      r.email,
+      r.name ?? "",
+      r.role,
+      r.is_active ? "Yes" : "No",
+      String(r.programmes_uploaded),
+      String(r.activity_count),
+      formatDate(r.created_at),
+    ]);
+    const csv = [headers.join(","), ...rowsCsv.map((r) => r.map(escapeCsv).join(","))].join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `users-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Users Report</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Users with programmes uploaded and activity counts.
+        </p>
+        <div className="mt-4 flex gap-2">
+          <Button onClick={fetchData} disabled={loading}>
+            {loading ? "Loading..." : "Generate"}
+          </Button>
+          <Button variant="outline" onClick={exportCsv} disabled={rows.length === 0}>
+            <FileDown className="mr-2 size-4" />
+            Export CSV
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <p className="py-8 text-center text-muted-foreground">Loading...</p>
+        ) : rows.length === 0 ? (
+          <p className="py-8 text-center text-muted-foreground">
+            No data. Click Generate to load.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead>Email</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Active</TableHead>
+                  <TableHead>Programmes</TableHead>
+                  <TableHead>Activity</TableHead>
+                  <TableHead>Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium">{r.email}</TableCell>
+                    <TableCell>{r.name ?? "—"}</TableCell>
+                    <TableCell>{r.role}</TableCell>
+                    <TableCell>{r.is_active ? "Yes" : "No"}</TableCell>
+                    <TableCell>{r.programmes_uploaded}</TableCell>
+                    <TableCell>{r.activity_count}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
+                      {formatDate(r.created_at)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+        {!loading && rows.length > 0 && (
+          <p className="mt-4 text-sm text-muted-foreground">
+            {rows.length} user(s)
           </p>
         )}
       </CardContent>

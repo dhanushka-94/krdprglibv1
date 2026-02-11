@@ -11,13 +11,14 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Music, Search, Play, ChevronRight, X } from "lucide-react";
+import { Music, Search, Play, X, Youtube, Facebook, Radio, Newspaper, FolderTree, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDateOnlyDisplay } from "@/lib/date-utils";
 import { useNowPlaying } from "@/lib/now-playing-context";
 import { ShareDownloadButtons } from "@/components/share-download-buttons";
 import type { AudioProgramme, Category, Subcategory, RadioChannel } from "@/lib/types";
 
 const DESCRIPTION_LINES = 3;
+const PAGE_SIZE = 12;
 type SortOption = "newest" | "oldest" | "title";
 
 export function ProgrammesList() {
@@ -37,6 +38,8 @@ export function ProgrammesList() {
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -93,25 +96,34 @@ export function ProgrammesList() {
     if (dateFrom) params.set("date_from", dateFrom);
     if (dateTo) params.set("date_to", dateTo);
     if (search) params.set("search", search);
+    params.set("limit", String(PAGE_SIZE));
+    params.set("offset", String((page - 1) * PAGE_SIZE));
+    params.set("order", sortBy);
 
     fetch(`/api/programmes?${params.toString()}`)
       .then((r) => r.json())
-      .then((d) => setProgrammes(d))
-      .catch(() => setProgrammes([]))
+      .then((d) => {
+        if (d && typeof d === "object" && "programmes" in d) {
+          setProgrammes(d.programmes ?? []);
+          setTotalCount(d.total ?? 0);
+        } else {
+          setProgrammes(Array.isArray(d) ? d : []);
+          setTotalCount(Array.isArray(d) ? d.length : 0);
+        }
+      })
+      .catch(() => {
+        setProgrammes([]);
+        setTotalCount(0);
+      })
       .finally(() => setLoading(false));
-  }, [mounted, categoryFilter, subcategoryFilter, radioChannelFilter, dateFrom, dateTo, search]);
+  }, [mounted, categoryFilter, subcategoryFilter, radioChannelFilter, dateFrom, dateTo, search, sortBy, page]);
 
-  const sortedProgrammes = useMemo(() => {
-    const list = [...programmes];
-    if (sortBy === "newest") {
-      list.sort((a, b) => (b.broadcasted_date || "").localeCompare(a.broadcasted_date || ""));
-    } else if (sortBy === "oldest") {
-      list.sort((a, b) => (a.broadcasted_date || "").localeCompare(b.broadcasted_date || ""));
-    } else {
-      list.sort((a, b) => (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: "base" }));
-    }
-    return list;
-  }, [programmes, sortBy]);
+  useEffect(() => {
+    if (!mounted) return;
+    setPage(1);
+  }, [mounted, categoryFilter, subcategoryFilter, radioChannelFilter, dateFrom, dateTo, search, sortBy]);
+
+  const sortedProgrammes = programmes;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,6 +143,7 @@ export function ProgrammesList() {
     setDateTo("");
     setSearch("");
     setSearchInput("");
+    setPage(1);
   };
 
   const handleQuickPlay = (e: React.MouseEvent, p: AudioProgramme & { category?: Category; subcategory?: Subcategory }) => {
@@ -161,104 +174,157 @@ export function ProgrammesList() {
 
   return (
     <div className="space-y-8">
-      {/* Hero / intro */}
-      <section className="space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Radio Programmes
-        </h1>
-        <p className="text-muted-foreground max-w-2xl">
-          Browse and listen to all programmes. Use the filters below to find by category, radio channel, or date.
-        </p>
+      {/* Hero – Krushi Radio branding (compact) */}
+      <section className="rounded-xl border border-border/60 bg-gradient-to-b from-primary/5 to-transparent px-4 py-3 sm:px-5 sm:py-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
+          <div>
+            <h1 className="text-base font-bold tracking-tight text-foreground sm:text-lg">
+              Official Agricultural Media Network in Sri Lanka
+            </h1>
+            <p className="text-sm text-muted-foreground font-medium" dir="ltr" lang="si">
+              ගහකොල අතරේ හුස්ම හොයනා රෙඩියෝ යාත්‍රිකයා
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 sm:gap-4">
+            <a
+              href="https://player.krushiradio.lk/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 hover:underline"
+            >
+              <Radio className="size-4 shrink-0" />
+              Listen live
+            </a>
+            <a
+              href="https://www.youtube.com/@KrushiRadio"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:underline"
+            >
+              <Youtube className="size-4 shrink-0" />
+              YouTube
+            </a>
+            <a
+              href="https://www.facebook.com/krushiradio/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+            >
+              <Facebook className="size-4 shrink-0" />
+              Facebook
+            </a>
+            <a
+              href="https://www.krushiradionews.lk/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 hover:underline"
+            >
+              <Newspaper className="size-4 shrink-0" />
+              News Magazine
+            </a>
+          </div>
+        </div>
       </section>
 
-      {/* Categories – filter pills */}
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-foreground">Categories</p>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setCategoryFilter("all")}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-              categoryFilter === "all"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            All
-          </button>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setCategoryFilter(c.id)}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-                categoryFilter === c.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-        {categoryFilter !== "all" && subcategories.length > 0 && (
-          <div className="flex flex-wrap gap-2 pl-1">
-            <span className="text-xs text-muted-foreground self-center mr-1">Subcategory:</span>
+      {/* Filters – Programme Types & Broadcast Channels */}
+      <div className="rounded-xl border border-border/60 bg-card/50 p-4 sm:p-5 space-y-4">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <FolderTree className="size-4 text-primary shrink-0" />
+            <p className="text-sm font-semibold text-foreground">Browse by Programme Name</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setSubcategoryFilter("all")}
-              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                subcategoryFilter === "all"
-                  ? "bg-primary/80 text-primary-foreground"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              onClick={() => setCategoryFilter("all")}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
+                categoryFilter === "all"
+                  ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                  : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               All
             </button>
-            {subcategories.map((s) => (
+            {categories.map((c) => (
               <button
-                key={s.id}
+                key={c.id}
                 type="button"
-                onClick={() => setSubcategoryFilter(s.id)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                  subcategoryFilter === s.id
-                    ? "bg-primary/80 text-primary-foreground"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                onClick={() => setCategoryFilter(c.id)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
+                  categoryFilter === c.id
+                    ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {s.name}
+                {c.name}
               </button>
             ))}
           </div>
-        )}
-        {radioChannels.length > 0 && (
-          <div className="flex flex-wrap gap-2 pl-1">
-            <span className="text-xs text-muted-foreground self-center mr-1">Radio channel:</span>
-            <button
-              type="button"
-              onClick={() => setRadioChannelFilter("all")}
-              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                radioChannelFilter === "all"
-                  ? "bg-primary/80 text-primary-foreground"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              All
-            </button>
-            {radioChannels.map((ch) => (
+          {categoryFilter !== "all" && subcategories.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 pl-6 border-l-2 border-primary/20">
+              <span className="text-xs font-medium text-muted-foreground">Refine:</span>
               <button
-                key={ch.id}
                 type="button"
-                onClick={() => setRadioChannelFilter(ch.id)}
-                className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                  radioChannelFilter === ch.id
-                    ? "bg-primary/80 text-primary-foreground"
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                onClick={() => setSubcategoryFilter("all")}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                  subcategoryFilter === "all"
+                    ? "bg-primary/90 text-primary-foreground"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {ch.name}
+                All
               </button>
-            ))}
+              {subcategories.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSubcategoryFilter(s.id)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                    subcategoryFilter === s.id
+                      ? "bg-primary/90 text-primary-foreground"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {radioChannels.length > 0 && (
+          <div className="space-y-3 pt-3 border-t border-border/60">
+            <div className="flex items-center gap-2">
+              <Radio className="size-4 text-primary shrink-0" />
+              <p className="text-sm font-semibold text-foreground">Where We Broadcast</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setRadioChannelFilter("all")}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
+                  radioChannelFilter === "all"
+                    ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                All channels
+              </button>
+              {radioChannels.map((ch) => (
+                <button
+                  key={ch.id}
+                  type="button"
+                  onClick={() => setRadioChannelFilter(ch.id)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
+                    radioChannelFilter === ch.id
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                      : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {ch.name}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -322,22 +388,24 @@ export function ProgrammesList() {
         </Button>
       </div>
 
-      {/* Result count */}
+      {/* Result count & pagination info */}
       {!loading && (
-        <p className="text-sm text-muted-foreground">
-          {sortedProgrammes.length === 0
-            ? "No programmes match your filters."
-            : `${sortedProgrammes.length} programme${sortedProgrammes.length === 1 ? "" : "s"}`}
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="ml-2 text-primary hover:underline"
-            >
-              Clear filters
-            </button>
-          )}
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            {totalCount === 0
+              ? "No programmes match your filters."
+              : `${totalCount} programme${totalCount === 1 ? "" : "s"}`}
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="ml-2 text-primary hover:underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </p>
+        </div>
       )}
 
       {loading ? (
@@ -473,6 +541,72 @@ export function ProgrammesList() {
             );
           })}
         </ul>
+      )}
+
+      {/* Pagination */}
+      {!loading && totalCount > 0 && totalCount > PAGE_SIZE && (
+        <nav
+          className="flex items-center justify-center gap-2 pt-4"
+          aria-label="Programmes pagination"
+        >
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <ChevronLeft className="size-4" />
+            Previous
+          </button>
+          <div className="flex items-center gap-1">
+            {(() => {
+              const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+              const maxVisible = 5;
+              let start = Math.max(1, page - Math.floor(maxVisible / 2));
+              let end = Math.min(totalPages, start + maxVisible - 1);
+              if (end - start + 1 < maxVisible) start = Math.max(1, end - maxVisible + 1);
+              const pages: (number | "ellipsis")[] = [];
+              if (start > 1) {
+                pages.push(1);
+                if (start > 2) pages.push("ellipsis");
+              }
+              for (let i = start; i <= end; i++) pages.push(i);
+              if (end < totalPages) {
+                if (end < totalPages - 1) pages.push("ellipsis");
+                pages.push(totalPages);
+              }
+              return pages.map((p, i) =>
+                p === "ellipsis" ? (
+                  <span key={`e-${i}`} className="px-2 text-muted-foreground">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPage(p)}
+                    className={`min-w-[2.25rem] rounded-full px-3 py-2 text-sm font-medium transition-all shadow-sm ${
+                      page === p
+                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                        : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              );
+            })()}
+          </div>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(Math.ceil(totalCount / PAGE_SIZE), p + 1))}
+            disabled={page >= Math.ceil(totalCount / PAGE_SIZE)}
+            className="inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            Next
+            <ChevronRight className="size-4" />
+          </button>
+        </nav>
       )}
     </div>
   );

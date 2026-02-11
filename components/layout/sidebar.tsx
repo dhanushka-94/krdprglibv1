@@ -17,7 +17,6 @@ import {
   X,
   UserCircle,
   Radio,
-  FlaskConical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAdminPath } from "@/lib/config";
@@ -42,7 +41,6 @@ const navItems = (adminBase: string): NavItem[] => [
     adminOnly: true,
     settingKey: "import_storage_enabled",
   },
-  { href: `${adminBase}/upload-test`, label: "Upload Test", icon: FlaskConical, adminOnly: true },
   { href: `${adminBase}/categories`, label: "Categories", icon: FolderTree, adminOnly: true },
   { href: `${adminBase}/subcategories`, label: "Subcategories", icon: FolderOpen, adminOnly: true },
   { href: `${adminBase}/radio-channels`, label: "Radio Channels", icon: Radio, adminOnly: true },

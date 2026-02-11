@@ -16,11 +16,24 @@ export async function GET(request: Request) {
     const dateTo = searchParams.get("date_to");
     const search = searchParams.get("search")?.trim();
     const createdByMe = searchParams.get("created_by") === "me";
+    const limitParam = searchParams.get("limit");
+    const offsetParam = searchParams.get("offset");
+    const orderParam = searchParams.get("order") || "newest";
+    const usePagination = limitParam !== null && limitParam !== "";
+    const limit = usePagination ? Math.min(Math.max(parseInt(limitParam || "12", 10), 1), 100) : 999999;
+    const offset = usePagination ? Math.max(0, parseInt(offsetParam || "0", 10)) : 0;
+
+    const orderBy = orderParam === "oldest"
+      ? { column: "broadcasted_date" as const, ascending: true }
+      : orderParam === "title"
+        ? { column: "title" as const, ascending: true }
+        : { column: "broadcasted_date" as const, ascending: false };
 
     let query = supabase
       .from("audio_programmes")
-      .select("*, category:categories(*), subcategory:subcategories(*), radio_channel:radio_channels(*)")
-      .order("broadcasted_date", { ascending: false, nullsFirst: false });
+      .select("*, category:categories(*), subcategory:subcategories(*), radio_channel:radio_channels(*)", usePagination ? { count: "exact" } : undefined)
+      .order(orderBy.column, { ascending: orderBy.ascending, nullsFirst: false })
+      .range(offset, offset + limit - 1);
 
     // Programme Manager: restrict to assigned categories/subcategories only
     const { getSession } = await import("@/lib/auth-session");
@@ -57,9 +70,12 @@ export async function GET(request: Request) {
       }
     }
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) throw error;
+    if (usePagination) {
+      return NextResponse.json({ programmes: data ?? [], total: count ?? 0 });
+    }
     return NextResponse.json(data);
   } catch (error) {
     console.error("Programmes GET:", error);
