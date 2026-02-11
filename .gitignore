@@ -1,6 +1,8 @@
 node_modules
 .next
 .env*.local
+.env.vercel
 *-firebase-adminsdk-*.json
 vercel-env-value.txt
+vercel.env
 .DS_Store
