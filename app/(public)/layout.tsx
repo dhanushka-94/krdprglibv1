@@ -2,6 +2,8 @@ import { getPublicSettings } from "@/lib/site-settings";
 import { MaintenanceView } from "@/components/maintenance-view";
 import { PublicLayoutClient } from "@/components/public-layout-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function PublicLayout({
   children,
 }: {
