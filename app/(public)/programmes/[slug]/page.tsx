@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Clock, Radio, CalendarDays } from "lucide-react";
@@ -8,7 +9,9 @@ import { getAdminPath } from "@/lib/config";
 import { formatDateOnlyDisplay, formatDurationSeconds } from "@/lib/date-utils";
 import { normalizeProgrammeSlug } from "@/lib/slug-utils";
 import ProgrammePlayer from "./player";
-import { ShareDownloadButtons } from "@/components/share-download-buttons";
+import { ProgrammeShareSocial } from "@/components/programme-share-social";
+import { LikeButton } from "@/components/like-button";
+import { CategoryScheduleBlock } from "@/components/category-schedule-block";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -60,7 +63,7 @@ export default async function ProgrammeDetailPage({ params }: Props) {
   if (error || !programme) notFound();
 
   const session = await getSession();
-  const category = programme.category as { name: string } | null;
+  const category = programme.category as { id?: string; name: string } | null;
   const subcategory = programme.subcategory as { name: string } | null;
   const radioChannel = programme.radio_channel as {
     name: string;
@@ -69,7 +72,7 @@ export default async function ProgrammeDetailPage({ params }: Props) {
     logo_url: string | null;
   } | null;
   const backHref = session ? getAdminPath("programmes") : "/";
-  const backLabel = session ? "Back to manage programmes" : "View all programmes";
+  const backLabel = session ? "Back to manage programmes" : "Back to all programmes";
   const dateStr = formatDateOnlyDisplay(programme.broadcasted_date) || programme.broadcasted_date;
   const repeatDateStr = programme.repeat_broadcasted_date
     ? formatDateOnlyDisplay(programme.repeat_broadcasted_date) || programme.repeat_broadcasted_date
@@ -77,118 +80,96 @@ export default async function ProgrammeDetailPage({ params }: Props) {
   const durationStr = formatDurationSeconds(programme.duration_seconds);
   const categoryLabel = [category?.name, subcategory?.name].filter(Boolean).join(" · ") || "Programme";
 
+  const headersList = await headers();
+  const host = headersList.get("x-forwarded-host") ?? headersList.get("host") ?? "";
+  const proto = headersList.get("x-forwarded-proto") ?? (host?.includes("localhost") ? "http" : "https");
+  const baseUrl = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_APP_URL ?? "");
+
   return (
-    <div className="space-y-6 sm:space-y-8">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-sm">
-        <Link
-          href={backHref}
-          className="inline-flex items-center gap-1.5 font-medium text-foreground transition-colors hover:text-primary"
-        >
-          <ArrowLeft className="size-4 shrink-0" />
-          {backLabel}
-        </Link>
-        <span className="text-muted-foreground">/</span>
-        <span className="truncate text-muted-foreground max-w-[200px] sm:max-w-xs" title={programme.title}>
+    <article className="w-full max-w-xl mx-auto space-y-6">
+      {/* Back link – simple */}
+      <Link
+        href={backHref}
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="size-4 shrink-0" />
+        {backLabel}
+      </Link>
+
+      {/* Title + meta */}
+      <div>
+        <h1 className="text-xl font-bold text-foreground sm:text-2xl leading-snug">
           {programme.title}
-        </span>
-      </nav>
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {categoryLabel}
+          {dateStr ? ` · ${dateStr}` : ""}
+          {durationStr ? ` · ${durationStr}` : ""}
+        </p>
+      </div>
 
-      <article className="max-w-2xl space-y-6 sm:space-y-8">
-        {/* 1st highlight: Category + Broadcasted date */}
-        <div className="rounded-xl border border-border/60 bg-primary/10 px-4 py-3">
-          <p className="text-sm font-semibold text-foreground">
-            {categoryLabel}
-            {dateStr ? ` · ${dateStr}` : ""}
+      {/* Audio player – main focus */}
+      <section className="rounded-xl bg-muted/30 p-4" aria-label="Listen">
+        <ProgrammePlayer url={programme.firebase_storage_url} />
+      </section>
+
+      {/* Actions: Like, Share, Download */}
+      <div className="flex flex-wrap items-center gap-3">
+        <LikeButton slug={programme.slug} className="size-9 shrink-0" />
+        <ProgrammeShareSocial title={programme.title} slug={programme.slug} baseUrl={baseUrl} compact />
+      </div>
+
+      {/* Description */}
+      {programme.description && (
+        <section>
+          <h2 className="text-sm font-medium text-foreground mb-2">About</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+            {programme.description}
           </p>
-        </div>
-
-        {/* 2nd highlight: Programme title */}
-        <header>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl leading-tight">
-            {programme.title}
-          </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-            {durationStr && (
-              <span className="inline-flex items-center gap-1.5">
-                <Clock className="size-4 shrink-0" />
-                {durationStr}
-              </span>
-            )}
-          </div>
-          <ShareDownloadButtons
-            title={programme.title}
-            slug={programme.slug}
-            className="mt-4"
-          />
-        </header>
-
-        {/* Audio player – prominent card */}
-        <section className="rounded-xl border border-border/60 bg-card p-4 sm:p-5 shadow-sm" aria-label="Audio player">
-          <ProgrammePlayer url={programme.firebase_storage_url} />
         </section>
+      )}
 
-        {/* 3rd highlight: Description */}
-        {programme.description && (
-          <section className="rounded-xl border border-border/60 bg-muted/20 p-4 sm:p-5">
-            <h2 className="text-base font-semibold text-foreground mb-3">Description</h2>
-            <p className="whitespace-pre-wrap text-sm sm:text-base text-muted-foreground leading-relaxed">
-              {programme.description}
-            </p>
-          </section>
-        )}
+      {/* Category broadcast schedule */}
+      {programme.category_id && (
+        <div className="pt-4 border-t border-border/40">
+          <CategoryScheduleBlock
+            categoryId={programme.category_id}
+            categoryName={category?.name}
+          />
+        </div>
+      )}
 
-        {/* 4th highlight: Repeat broadcast date */}
-        {repeatDateStr && (
-          <section className="rounded-xl border border-border/60 bg-muted/40 px-4 py-3">
-            <p className="text-sm font-medium text-foreground inline-flex items-center gap-2">
-              <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
-              Repeat broadcast: {repeatDateStr}
-            </p>
-          </section>
-        )}
-
-        {/* 5th highlight: Radio channel */}
-        {radioChannel && (
-          <section className="rounded-xl border border-border/60 bg-muted/40 p-4" aria-label="Broadcast channel">
-            <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-              Broadcast on
-            </h2>
-            <div className="flex items-center gap-3">
+      {/* Secondary info – compact */}
+      {(repeatDateStr || radioChannel) && (
+        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pt-2 border-t border-border/40">
+          {repeatDateStr && (
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays className="size-4 shrink-0" />
+              Repeat: {repeatDateStr}
+            </span>
+          )}
+          {radioChannel && (
+            <span className="inline-flex items-center gap-2">
               {radioChannel.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={radioChannel.logo_url}
                   alt=""
-                  className="size-12 rounded-full object-cover shrink-0 border border-border/60"
+                  className="size-6 rounded-full object-cover shrink-0"
                 />
               ) : (
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted border border-border/60">
-                  <Radio className="size-6 text-muted-foreground" />
-                </span>
+                <Radio className="size-4 shrink-0" />
               )}
-              <div className="min-w-0">
-                <p className="font-semibold text-foreground">{radioChannel.name}</p>
+              <span>
+                {radioChannel.name}
                 {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).length > 0 && (
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).join(" · ")}
-                  </p>
+                  <> · {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).join(", ")}</>
                 )}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Back link */}
-        <div className="border-t border-border/60 pt-6">
-          <Link
-            href={backHref}
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"
-          >
-            <ArrowLeft className="size-4" />
-            {backLabel}
-          </Link>
+              </span>
+            </span>
+          )}
         </div>
-      </article>
-    </div>
+      )}
+    </article>
   );
 }

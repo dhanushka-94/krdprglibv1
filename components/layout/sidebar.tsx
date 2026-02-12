@@ -17,6 +17,7 @@ import {
   X,
   UserCircle,
   Radio,
+  CalendarClock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAdminPath } from "@/lib/config";
@@ -43,6 +44,7 @@ const navItems = (adminBase: string): NavItem[] => [
   { href: `${adminBase}/categories`, label: "Categories", icon: FolderTree, adminOnly: true },
   { href: `${adminBase}/subcategories`, label: "Subcategories", icon: FolderOpen, adminOnly: true },
   { href: `${adminBase}/radio-channels`, label: "Radio Channels", icon: Radio, adminOnly: true },
+  { href: `${adminBase}/schedules`, label: "Schedules", icon: CalendarClock, adminOnly: true },
   { href: `${adminBase}/reports`, label: "Reports", icon: FileBarChart2, adminOnly: true },
   { href: `${adminBase}/activity-logs`, label: "Activity Logs", icon: Activity, adminOnly: true },
   { href: `${adminBase}/users`, label: "Users", icon: Users, adminOnly: true },

@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Play, Pause, Volume2, VolumeX, SkipBack, SkipForward } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const PLAYBACK_SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;
+const SKIP_SECONDS = 10;
 
 function formatTime(seconds: number) {
   if (!isFinite(seconds) || isNaN(seconds) || seconds < 0) return "0:00";
@@ -16,10 +19,13 @@ interface AudioPlayerProps {
   className?: string;
   autoPlay?: boolean;
   compact?: boolean;
+  /** Enable enhanced controls: speed, skip, keyboard shortcuts. Default true for full layout. */
+  enhanced?: boolean;
 }
 
-export function AudioPlayer({ src, className, autoPlay, compact }: AudioPlayerProps) {
+export function AudioPlayer({ src, className, autoPlay, compact, enhanced = !compact }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const isSeekingRef = useRef(false);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -28,6 +34,15 @@ export function AudioPlayer({ src, className, autoPlay, compact }: AudioPlayerPr
   const [muted, setMuted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [speedIndex, setSpeedIndex] = useState(1); // 1x default
+
+  const playbackRate = PLAYBACK_SPEEDS[speedIndex];
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    el.playbackRate = playbackRate;
+  }, [playbackRate]);
 
   useEffect(() => {
     const el = audioRef.current;
@@ -71,12 +86,41 @@ export function AudioPlayer({ src, className, autoPlay, compact }: AudioPlayerPr
     };
   }, [src]);
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     const el = audioRef.current;
     if (!el) return;
     if (playing) el.pause();
     else el.play();
-  };
+  }, [playing]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!enhanced) return;
+      const el = audioRef.current;
+      if (!el) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      switch (e.key) {
+        case " ":
+          e.preventDefault();
+          if (el.paused) el.play();
+          else el.pause();
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          el.currentTime = Math.max(0, el.currentTime - SKIP_SECONDS);
+          setCurrentTime(el.currentTime);
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          el.currentTime = Math.min(el.duration, el.currentTime + SKIP_SECONDS);
+          setCurrentTime(el.currentTime);
+          break;
+        default:
+          break;
+      }
+    },
+    [enhanced]
+  );
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = audioRef.current;
@@ -186,30 +230,78 @@ export function AudioPlayer({ src, className, autoPlay, compact }: AudioPlayerPr
     );
   }
 
+  const skipBack = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    el.currentTime = Math.max(0, el.currentTime - SKIP_SECONDS);
+    setCurrentTime(el.currentTime);
+  };
+
+  const skipForward = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    el.currentTime = Math.min(el.duration || 0, el.currentTime + SKIP_SECONDS);
+    setCurrentTime(el.currentTime);
+  };
+
+  const cycleSpeed = () => {
+    setSpeedIndex((i) => (i + 1) % PLAYBACK_SPEEDS.length);
+  };
+
   return (
     <div
+      ref={containerRef}
+      role="group"
+      aria-label="Audio player"
+      tabIndex={enhanced ? 0 : undefined}
+      onKeyDown={enhanced ? handleKeyDown : undefined}
       className={cn(
         "rounded-2xl bg-gradient-to-b from-muted/50 to-muted/30 p-5 shadow-sm ring-1 ring-border/50",
+        enhanced && "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         className
       )}
     >
       <audio ref={audioRef} src={src} preload="metadata" autoPlay={autoPlay} className="hidden" />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <button
-          type="button"
-          onClick={togglePlay}
-          disabled={loading}
-          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-primary/20 transition hover:scale-105 hover:ring-primary/30 disabled:opacity-60"
-        >
-          {loading ? (
-            <span className="size-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          ) : playing ? (
-            <Pause className="size-7" fill="currentColor" />
-          ) : (
-            <Play className="ml-1 size-7" fill="currentColor" />
+        <div className="flex items-center gap-2">
+          {enhanced && (
+            <button
+              type="button"
+              onClick={skipBack}
+              disabled={loading}
+              className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+              aria-label={`Rewind ${SKIP_SECONDS} seconds`}
+            >
+              <SkipBack className="size-5" />
+            </button>
           )}
-        </button>
+          <button
+            type="button"
+            onClick={togglePlay}
+            disabled={loading}
+            className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-primary/20 transition hover:scale-105 hover:ring-primary/30 disabled:opacity-60"
+          >
+            {loading ? (
+              <span className="size-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            ) : playing ? (
+              <Pause className="size-7" fill="currentColor" />
+            ) : (
+              <Play className="ml-1 size-7" fill="currentColor" />
+            )}
+          </button>
+          {enhanced && (
+            <button
+              type="button"
+              onClick={skipForward}
+              disabled={loading}
+              className="flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+              aria-label={`Forward ${SKIP_SECONDS} seconds`}
+            >
+              <SkipForward className="size-5" />
+            </button>
+          )}
+        </div>
 
         <div className="min-w-0 flex-1 space-y-2">
           <input
@@ -231,11 +323,22 @@ export function AudioPlayer({ src, className, autoPlay, compact }: AudioPlayerPr
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
+          {enhanced && (
+            <button
+              type="button"
+              onClick={cycleSpeed}
+              className="flex h-9 min-w-[3rem] items-center justify-center rounded-lg bg-muted/60 px-2 text-xs font-medium text-foreground transition hover:bg-muted"
+              title="Playback speed"
+            >
+              {playbackRate}x
+            </button>
+          )}
           <button
             type="button"
             onClick={toggleMute}
             className="flex size-10 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            aria-label={muted ? "Unmute" : "Mute"}
           >
             {muted || volume === 0 ? (
               <VolumeX className="size-5" />
@@ -252,6 +355,7 @@ export function AudioPlayer({ src, className, autoPlay, compact }: AudioPlayerPr
               value={muted ? 0 : volume}
               onChange={handleVolumeChange}
               className="h-1.5 w-full cursor-pointer rounded-full accent-primary"
+              aria-label="Volume"
             />
           </div>
         </div>

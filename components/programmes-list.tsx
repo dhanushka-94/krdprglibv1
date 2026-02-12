@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Music, Search, Play, X, Youtube, Facebook, Radio, Newspaper, FolderTree, ChevronLeft, ChevronRight } from "lucide-react";
+import { Music, Search, Play, X, Youtube, Facebook, Radio, Newspaper, FolderTree, ChevronLeft, ChevronRight, CalendarClock } from "lucide-react";
 import { formatDateOnlyDisplay } from "@/lib/date-utils";
 import { useNowPlaying } from "@/lib/now-playing-context";
 import { ShareDownloadButtons } from "@/components/share-download-buttons";
@@ -23,6 +24,7 @@ type SortOption = "newest" | "oldest" | "title";
 
 export function ProgrammesList() {
   const { play: playTrack } = useNowPlaying();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [programmes, setProgrammes] = useState<
     (AudioProgramme & { category?: Category; subcategory?: Subcategory })[]
@@ -46,6 +48,12 @@ export function ProgrammesList() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const catId = searchParams.get("category_id");
+    if (catId) setCategoryFilter(catId);
+  }, [mounted, searchParams]);
 
   /* Auto search: debounce typing and run server-side search (Supabase) without loading all data */
   useEffect(() => {
@@ -186,6 +194,13 @@ export function ProgrammesList() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3 sm:gap-4">
+            <Link
+              href="/schedule"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary hover:underline"
+            >
+              <CalendarClock className="size-4 shrink-0" />
+              Schedule
+            </Link>
             <a
               href="https://player.krushiradio.lk/"
               target="_blank"
