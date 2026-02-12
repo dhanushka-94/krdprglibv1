@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, Radio, CalendarDays } from "lucide-react";
+import { ArrowLeft, CalendarDays } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getSession } from "@/lib/auth-session";
 import { getAdminPath } from "@/lib/config";
@@ -12,6 +12,7 @@ import ProgrammePlayer from "./player";
 import { ProgrammeShareSocial } from "@/components/programme-share-social";
 import { LikeButton } from "@/components/like-button";
 import { CategoryScheduleBlock } from "@/components/category-schedule-block";
+import { ProgrammeMetaLine, ChannelDisplay } from "@/components/programme-detail-meta";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -63,10 +64,12 @@ export default async function ProgrammeDetailPage({ params }: Props) {
   if (error || !programme) notFound();
 
   const session = await getSession();
-  const category = programme.category as { id?: string; name: string } | null;
-  const subcategory = programme.subcategory as { name: string } | null;
+  const category = programme.category as { id?: string; name: string; name_si?: string; name_ta?: string } | null;
+  const subcategory = programme.subcategory as { name: string; name_si?: string; name_ta?: string } | null;
   const radioChannel = programme.radio_channel as {
     name: string;
+    name_si?: string;
+    name_ta?: string;
     frequency: string | null;
     frequency_2: string | null;
     logo_url: string | null;
@@ -78,7 +81,6 @@ export default async function ProgrammeDetailPage({ params }: Props) {
     ? formatDateOnlyDisplay(programme.repeat_broadcasted_date) || programme.repeat_broadcasted_date
     : null;
   const durationStr = formatDurationSeconds(programme.duration_seconds);
-  const categoryLabel = [category?.name, subcategory?.name].filter(Boolean).join(" · ") || "Programme";
 
   const headersList = await headers();
   const host = headersList.get("x-forwarded-host") ?? headersList.get("host") ?? "";
@@ -101,11 +103,12 @@ export default async function ProgrammeDetailPage({ params }: Props) {
         <h1 className="text-xl font-bold text-foreground sm:text-2xl leading-snug">
           {programme.title}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {categoryLabel}
-          {dateStr ? ` · ${dateStr}` : ""}
-          {durationStr ? ` · ${durationStr}` : ""}
-        </p>
+        <ProgrammeMetaLine
+          category={category}
+          subcategory={subcategory}
+          dateStr={dateStr}
+          durationStr={durationStr}
+        />
       </div>
 
       {/* Audio player – main focus */}
@@ -149,24 +152,7 @@ export default async function ProgrammeDetailPage({ params }: Props) {
             </span>
           )}
           {radioChannel && (
-            <span className="inline-flex items-center gap-2">
-              {radioChannel.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={radioChannel.logo_url}
-                  alt=""
-                  className="size-6 rounded-full object-cover shrink-0"
-                />
-              ) : (
-                <Radio className="size-4 shrink-0" />
-              )}
-              <span>
-                {radioChannel.name}
-                {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).length > 0 && (
-                  <> · {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).join(", ")}</>
-                )}
-              </span>
-            </span>
+            <ChannelDisplay channel={radioChannel} />
           )}
         </div>
       )}

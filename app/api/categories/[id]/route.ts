@@ -43,9 +43,11 @@ export async function PATCH(
     if (!session) throw new Error("No session");
     const { id } = await params;
     const body = await request.json();
-    const updates: { name?: string; slug?: string; display_order?: number } = {};
+    const updates: { name?: string; name_si?: string; name_ta?: string; slug?: string; display_order?: number } = {};
 
     if (body.name !== undefined) updates.name = body.name;
+    if (body.name_si !== undefined) updates.name_si = (body.name_si as string)?.trim() ?? "";
+    if (body.name_ta !== undefined) updates.name_ta = (body.name_ta as string)?.trim() ?? "";
     if (body.slug !== undefined) updates.slug = body.slug;
     else if (body.name) updates.slug = slugify(body.name);
     if (body.display_order !== undefined) updates.display_order = body.display_order;

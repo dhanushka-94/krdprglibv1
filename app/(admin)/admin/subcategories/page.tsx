@@ -48,6 +48,8 @@ function SubcategoriesContent() {
   const [editing, setEditing] = useState<(Subcategory & { category?: Category }) | null>(null);
   const [categoryId, setCategoryId] = useState("");
   const [name, setName] = useState("");
+  const [nameSi, setNameSi] = useState("");
+  const [nameTa, setNameTa] = useState("");
   const [slug, setSlug] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -84,6 +86,8 @@ function SubcategoriesContent() {
     setEditing(null);
     setCategoryId(categories[0]?.id ?? "");
     setName("");
+    setNameSi("");
+    setNameTa("");
     setSlug("");
     setDialogOpen(true);
   };
@@ -92,6 +96,8 @@ function SubcategoriesContent() {
     setEditing(s);
     setCategoryId(s.category_id);
     setName(s.name);
+    setNameSi(s.name_si ?? "");
+    setNameTa(s.name_ta ?? "");
     setSlug(s.slug);
     setDialogOpen(true);
   };
@@ -109,6 +115,8 @@ function SubcategoriesContent() {
       const payload = {
         category_id: categoryId,
         name: name.trim(),
+        name_si: nameSi.trim(),
+        name_ta: nameTa.trim(),
         slug: slug.trim() || slugify(name),
       };
       const url = editing
@@ -172,7 +180,9 @@ function SubcategoriesContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>Name (EN)</TableHead>
+                  <TableHead>Name (SI)</TableHead>
+                  <TableHead>Name (TA)</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
@@ -182,6 +192,8 @@ function SubcategoriesContent() {
                 {subcategories.map((s) => (
                   <TableRow key={s.id}>
                     <TableCell>{s.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{s.name_si || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{s.name_ta || "—"}</TableCell>
                     <TableCell>{(s.category as Category)?.name ?? "-"}</TableCell>
                     <TableCell className="text-muted-foreground">{s.slug}</TableCell>
                     <TableCell>
@@ -237,12 +249,32 @@ function SubcategoriesContent() {
                 </Select>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Name (English)</Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="Subcategory name"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="sub_name_si">Name (සිංහල)</Label>
+                <Input
+                  id="sub_name_si"
+                  value={nameSi}
+                  onChange={(e) => setNameSi(e.target.value)}
+                  placeholder="උප කාණ්ඩයේ නම"
+                  dir="ltr"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="sub_name_ta">Name (தமிழ்)</Label>
+                <Input
+                  id="sub_name_ta"
+                  value={nameTa}
+                  onChange={(e) => setNameTa(e.target.value)}
+                  placeholder="துணை வகை பெயர்"
+                  dir="ltr"
                 />
               </div>
               <div className="grid gap-2">

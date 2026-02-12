@@ -1,6 +1,8 @@
 export interface Category {
   id: string;
   name: string;
+  name_si: string;
+  name_ta: string;
   slug: string;
   display_order: number;
   created_at: string;
@@ -11,6 +13,8 @@ export interface Subcategory {
   id: string;
   category_id: string;
   name: string;
+  name_si: string;
+  name_ta: string;
   slug: string;
   display_order: number;
   created_at: string;
@@ -21,6 +25,8 @@ export interface Subcategory {
 export interface RadioChannel {
   id: string;
   name: string;
+  name_si: string;
+  name_ta: string;
   frequency: string | null;
   frequency_2: string | null;
   logo_url: string | null;
@@ -28,6 +34,8 @@ export interface RadioChannel {
   created_at: string;
   updated_at: string;
 }
+
+export type Lang = "en" | "si" | "ta";
 
 export interface AudioProgramme {
   id: string;

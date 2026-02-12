@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Music, Search, Play, X, Youtube, Facebook, Radio, Newspaper, FolderTree, ChevronLeft, ChevronRight, CalendarClock } from "lucide-react";
 import { formatDateOnlyDisplay } from "@/lib/date-utils";
 import { useNowPlaying } from "@/lib/now-playing-context";
+import { useLanguage } from "@/lib/language-context";
+import { localizedName } from "@/lib/lang-utils";
 import { ShareDownloadButtons } from "@/components/share-download-buttons";
 import type { AudioProgramme, Category, Subcategory, RadioChannel } from "@/lib/types";
 
@@ -24,6 +26,7 @@ type SortOption = "newest" | "oldest" | "title";
 
 export function ProgrammesList() {
   const { play: playTrack } = useNowPlaying();
+  const { lang } = useLanguage();
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [programmes, setProgrammes] = useState<
@@ -271,7 +274,7 @@ export function ProgrammesList() {
                     : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {c.name}
+                {localizedName(c, lang)}
               </button>
             ))}
           </div>
@@ -300,7 +303,7 @@ export function ProgrammesList() {
                       : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  {s.name}
+                  {localizedName(s, lang)}
                 </button>
               ))}
             </div>
@@ -336,7 +339,7 @@ export function ProgrammesList() {
                       : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  {ch.name}
+                  {localizedName(ch, lang)}
                 </button>
               ))}
             </div>
@@ -448,7 +451,7 @@ export function ProgrammesList() {
             const cat = p.category as Category | undefined;
             const sub = p.subcategory as Subcategory | undefined;
             const channel = p.radio_channel as RadioChannel | undefined;
-            const categoryLabel = [cat?.name, sub?.name].filter(Boolean).join(" · ") || "Programme";
+            const categoryLabel = [localizedName(cat, lang), localizedName(sub, lang)].filter(Boolean).join(" · ") || "Programme";
             const dateStr = formatDateOnlyDisplay(p.broadcasted_date) || p.broadcasted_date;
             const repeatDateStr = p.repeat_broadcasted_date
               ? formatDateOnlyDisplay(p.repeat_broadcasted_date) || p.repeat_broadcasted_date
@@ -530,7 +533,7 @@ export function ProgrammesList() {
                         />
                       ) : null}
                       <span className="text-xs font-medium text-foreground truncate">
-                        {channel.name}
+                        {localizedName(channel, lang)}
                         {[channel.frequency, channel.frequency_2].filter(Boolean).length > 0
                           ? " · " + [channel.frequency, channel.frequency_2].filter(Boolean).join(" · ")
                           : ""}

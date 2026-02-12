@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AuthButton } from "@/components/auth-button";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export function PublicHeader({ systemName, logoUrl }: { systemName?: string; logoUrl?: string }) {
   const name = (systemName && systemName.trim()) || "Television and Farm Broadcasting Service – All Radio Programmes Library";
@@ -26,7 +27,10 @@ export function PublicHeader({ systemName, logoUrl }: { systemName?: string; log
             {name}
           </span>
         </Link>
-        <AuthButton />
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher />
+          <AuthButton />
+        </div>
       </div>
     </header>
   );

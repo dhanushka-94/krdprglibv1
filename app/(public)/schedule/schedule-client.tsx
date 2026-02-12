@@ -10,7 +10,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CalendarClock, ArrowLeft } from "lucide-react";
-import type { RadioChannel } from "@/lib/types";
+import { useLanguage } from "@/lib/language-context";
+import { localizedName } from "@/lib/lang-utils";
+import type { RadioChannel, Lang } from "@/lib/types";
 
 type ScheduleItem = {
   id: string;
@@ -20,8 +22,8 @@ type ScheduleItem = {
   start_time: string;
   end_time: string;
   is_daily: boolean;
-  category?: { id: string; name: string; slug: string };
-  radio_channel?: { id: string; name: string; frequency?: string; frequency_2?: string; logo_url?: string };
+  category?: { id: string; name: string; name_si?: string; name_ta?: string; slug: string };
+  radio_channel?: { id: string; name: string; name_si?: string; name_ta?: string; frequency?: string; frequency_2?: string; logo_url?: string };
 };
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -37,7 +39,8 @@ function formatTime(t: string) {
 type CellSlot = { time: string; channel: string };
 
 function buildGrid(
-  schedules: ScheduleItem[]
+  schedules: ScheduleItem[],
+  lang: Lang
 ): { categoryId: string; categoryName: string; slug?: string; days: CellSlot[][] }[] {
   const byCategory = schedules.reduce<Record<string, ScheduleItem[]>>((acc, s) => {
     if (!acc[s.category_id]) acc[s.category_id] = [];
@@ -48,11 +51,11 @@ function buildGrid(
   return Object.entries(byCategory)
     .map(([categoryId, slots]) => {
       const days: CellSlot[][] = [[], [], [], [], [], [], []];
-      const cat = slots[0]?.category as { name?: string; slug?: string } | undefined;
+      const cat = slots[0]?.category;
 
       for (const s of slots) {
         const time = `${formatTime(s.start_time)}–${formatTime(s.end_time)}`;
-        const channel = (s.radio_channel as { name?: string })?.name ?? "Channel";
+        const channel = localizedName(s.radio_channel, lang) || "Channel";
         const entry: CellSlot = { time, channel };
 
         if (s.is_daily) {
@@ -65,7 +68,7 @@ function buildGrid(
 
       return {
         categoryId,
-        categoryName: cat?.name ?? "Programme",
+        categoryName: localizedName(cat, lang) || "Programme",
         slug: cat?.slug,
         days,
       };
@@ -74,6 +77,7 @@ function buildGrid(
 }
 
 export function SchedulePageClient() {
+  const { lang } = useLanguage();
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [channels, setChannels] = useState<RadioChannel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,7 +101,7 @@ export function SchedulePageClient() {
       .finally(() => setLoading(false));
   }, [channelFilter]);
 
-  const grid = buildGrid(schedules);
+  const grid = buildGrid(schedules, lang);
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -130,7 +134,7 @@ export function SchedulePageClient() {
               <SelectItem value="all">All channels</SelectItem>
               {channels.map((ch) => (
                 <SelectItem key={ch.id} value={ch.id}>
-                  {ch.name}
+                  {localizedName(ch, lang)}
                 </SelectItem>
               ))}
             </SelectContent>

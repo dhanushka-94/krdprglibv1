@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { PublicHeader } from "@/components/public-header";
 import { NowPlayingProvider, useNowPlaying } from "@/lib/now-playing-context";
 import { NowPlayingBar } from "@/components/now-playing-bar";
+import { LanguageProvider } from "@/lib/language-context";
 
 const LOGIN_PATH = "/login";
 
@@ -44,10 +45,12 @@ export function PublicLayoutClient({
   logoUrl: string;
 }) {
   return (
-    <NowPlayingProvider>
-      <PublicLayoutInner systemName={systemName} logoUrl={logoUrl}>
-        {children}
-      </PublicLayoutInner>
-    </NowPlayingProvider>
+    <LanguageProvider>
+      <NowPlayingProvider>
+        <PublicLayoutInner systemName={systemName} logoUrl={logoUrl}>
+          {children}
+        </PublicLayoutInner>
+      </NowPlayingProvider>
+    </LanguageProvider>
   );
 }

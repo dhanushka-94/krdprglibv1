@@ -39,6 +39,8 @@ function CategoriesContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [name, setName] = useState("");
+  const [nameSi, setNameSi] = useState("");
+  const [nameTa, setNameTa] = useState("");
   const [slug, setSlug] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -62,6 +64,8 @@ function CategoriesContent() {
   const openCreate = () => {
     setEditingCategory(null);
     setName("");
+    setNameSi("");
+    setNameTa("");
     setSlug("");
     setDialogOpen(true);
   };
@@ -69,6 +73,8 @@ function CategoriesContent() {
   const openEdit = (c: Category) => {
     setEditingCategory(c);
     setName(c.name);
+    setNameSi(c.name_si ?? "");
+    setNameTa(c.name_ta ?? "");
     setSlug(c.slug);
     setDialogOpen(true);
   };
@@ -91,7 +97,7 @@ function CategoriesContent() {
     if (!name.trim()) return;
     setSubmitting(true);
     try {
-      const payload = { name: name.trim(), slug: slug.trim() || slugify(name) };
+      const payload = { name: name.trim(), name_si: nameSi.trim(), name_ta: nameTa.trim(), slug: slug.trim() || slugify(name) };
       const url = editingCategory
         ? `/api/categories/${editingCategory.id}`
         : "/api/categories";
@@ -155,7 +161,9 @@ function CategoriesContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>Name (EN)</TableHead>
+                  <TableHead>Name (SI)</TableHead>
+                  <TableHead>Name (TA)</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
@@ -164,6 +172,8 @@ function CategoriesContent() {
                 {categories.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>{c.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{c.name_si || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{c.name_ta || "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{c.slug}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -203,12 +213,32 @@ function CategoriesContent() {
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor="name">Name (English)</Label>
                 <Input
                   id="name"
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="Category name"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="name_si">Name (සිංහල)</Label>
+                <Input
+                  id="name_si"
+                  value={nameSi}
+                  onChange={(e) => setNameSi(e.target.value)}
+                  placeholder="කාණ්ඩයේ නම"
+                  dir="ltr"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="name_ta">Name (தமிழ்)</Label>
+                <Input
+                  id="name_ta"
+                  value={nameTa}
+                  onChange={(e) => setNameTa(e.target.value)}
+                  placeholder="வகை பெயர்"
+                  dir="ltr"
                 />
               </div>
               <div className="grid gap-2">
