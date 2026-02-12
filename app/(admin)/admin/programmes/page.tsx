@@ -180,7 +180,7 @@ export default function ProgrammesAdminPage() {
               <Input
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search title, description..."
+                placeholder="Search anything..."
                 className="pl-9 pr-9"
               />
               {searchInput && (

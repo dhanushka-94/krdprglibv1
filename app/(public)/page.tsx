@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { ProgrammesList } from "@/components/programmes-list";
 
 export default function HomePage() {
-  return <ProgrammesList />;
+  return (
+    <Suspense>
+      <ProgrammesList />
+    </Suspense>
+  );
 }

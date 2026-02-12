@@ -64,9 +64,29 @@ export async function GET(request: Request) {
       const safeSearch = search.replace(/,/g, " ").trim();
       if (safeSearch) {
         const pattern = `%${safeSearch}%`;
-        query = query.or(
-          `title.ilike.${pattern},description.ilike.${pattern},seo_title.ilike.${pattern},seo_keywords.ilike.${pattern}`
-        );
+        const orParts: string[] = [
+          `title.ilike.${pattern}`,
+          `description.ilike.${pattern}`,
+          `seo_title.ilike.${pattern}`,
+          `seo_description.ilike.${pattern}`,
+          `seo_keywords.ilike.${pattern}`,
+          `slug.ilike.${pattern}`,
+        ];
+
+        const [catRes, subRes, chanRes] = await Promise.all([
+          supabase.from("categories").select("id").ilike("name", pattern),
+          supabase.from("subcategories").select("id").ilike("name", pattern),
+          supabase.from("radio_channels").select("id").ilike("name", pattern),
+        ]);
+        const catIds = (catRes.data ?? []).map((r) => r.id);
+        const subIds = (subRes.data ?? []).map((r) => r.id);
+        const chanIds = (chanRes.data ?? []).map((r) => r.id);
+
+        for (const id of catIds) orParts.push(`category_id.eq.${id}`);
+        for (const id of subIds) orParts.push(`subcategory_id.eq.${id}`);
+        for (const id of chanIds) orParts.push(`radio_channel_id.eq.${id}`);
+
+        query = query.or(orParts.join(","));
       }
     }
 

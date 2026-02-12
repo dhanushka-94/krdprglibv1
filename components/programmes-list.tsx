@@ -352,7 +352,7 @@ export function ProgrammesList() {
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search programmes..."
+              placeholder="Search anything..."
               className="h-9 pl-9 pr-9 rounded-lg bg-muted/50 border-0"
             />
             {searchInput && (
