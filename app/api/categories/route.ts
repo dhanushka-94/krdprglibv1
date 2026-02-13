@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const { data, error } = await supabase
       .from("categories")
-      .select("*")
+      .select("*, radio_channel:radio_channels(*)")
       .order("display_order")
       .order("name");
 
@@ -41,12 +41,11 @@ export async function POST(request: Request) {
       .from("categories")
       .insert({
         name,
-        name_si: (body.name_si as string)?.trim() ?? "",
-        name_ta: (body.name_ta as string)?.trim() ?? "",
         slug,
         display_order: body.display_order ?? 0,
+        radio_channel_id: body.radio_channel_id || null,
       })
-      .select()
+      .select("*, radio_channel:radio_channels(*)")
       .single();
 
     if (error) throw error;

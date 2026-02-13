@@ -23,14 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Pencil, Trash2, ExternalLink, Search, Music, X } from "lucide-react";
+import { Pencil, Trash2, ExternalLink, Search, Music, X, Power, PowerOff } from "lucide-react";
 import type { AudioProgramme, Category, Subcategory, RadioChannel } from "@/lib/types";
 
 type SortOption = "newest" | "oldest" | "title";
 
 export default function ProgrammesAdminPage() {
   const [programmes, setProgrammes] = useState<
-    (AudioProgramme & { category?: Category; subcategory?: Subcategory; radio_channel?: RadioChannel })[]
+    (AudioProgramme & { category?: Category & { radio_channel?: RadioChannel }; subcategory?: Subcategory })[]
   >([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -44,6 +44,7 @@ export default function ProgrammesAdminPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [isAdmin, setIsAdmin] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search
@@ -83,7 +84,7 @@ export default function ProgrammesAdminPage() {
     if (dateTo) params.set("date_to", dateTo);
     if (search) params.set("search", search);
 
-    fetch(`/api/programmes?${params.toString()}`)
+    fetch(`/api/programmes?${params.toString()}`, { credentials: "include" })
       .then((r) => r.json())
       .then((d) => setProgrammes(Array.isArray(d) ? d : []))
       .catch(() => {
@@ -93,8 +94,12 @@ export default function ProgrammesAdminPage() {
       .finally(() => setLoading(false));
   }, [categoryFilter, subcategoryFilter, radioChannelFilter, dateFrom, dateTo, search]);
 
-  // Load categories and radio channels once
+  // Load user role and categories/radio channels once
   useEffect(() => {
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => r.json())
+      .then((d) => setIsAdmin(d.user?.role === "Admin"))
+      .catch(() => {});
     fetch("/api/categories")
       .then((r) => r.json())
       .then((d) => setCategories(Array.isArray(d) ? d : []))
@@ -133,6 +138,26 @@ export default function ProgrammesAdminPage() {
     setDateTo("");
     setSearchInput("");
     setSearch("");
+  };
+
+  const handleToggleEnabled = async (id: string, currentlyEnabled: boolean) => {
+    try {
+      const res = await fetch(`/api/programmes/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ enabled: !currentlyEnabled }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setProgrammes((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, enabled: !currentlyEnabled } : p))
+        );
+        toast.success(currentlyEnabled ? "Programme disabled (hidden from public)" : "Programme enabled");
+      } else toast.error(data.error || "Failed to update");
+    } catch {
+      toast.error("Failed to update");
+    }
   };
 
   const handleDelete = async (id: string, path: string) => {
@@ -341,6 +366,9 @@ export default function ProgrammesAdminPage() {
                     <TableHead>Category</TableHead>
                     <TableHead>Subcategory</TableHead>
                     <TableHead>Radio channel</TableHead>
+                    {isAdmin && (
+                      <TableHead className="w-[80px]" title="Enable/Disable (admin only)">Status</TableHead>
+                    )}
                     <TableHead className="w-[140px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -360,7 +388,24 @@ export default function ProgrammesAdminPage() {
                       </TableCell>
                       <TableCell>{(p.category as Category)?.name ?? "—"}</TableCell>
                       <TableCell>{(p.subcategory as Subcategory)?.name ?? "—"}</TableCell>
-                      <TableCell>{(p.radio_channel as RadioChannel)?.name ?? "—"}</TableCell>
+                      <TableCell>{(p.category as { radio_channel?: RadioChannel })?.radio_channel?.name ?? "—"}</TableCell>
+                      {isAdmin && (
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleToggleEnabled(p.id, p.enabled !== false)}
+                            title={p.enabled === false ? "Enable programme" : "Disable programme (hide from public)"}
+                            className={p.enabled === false ? "text-muted-foreground" : "text-green-600 hover:text-green-700"}
+                          >
+                            {p.enabled === false ? (
+                              <PowerOff className="size-4" />
+                            ) : (
+                              <Power className="size-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                      )}
                       <TableCell>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="icon" asChild title="View on site">

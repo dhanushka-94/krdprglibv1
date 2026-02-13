@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
     let q = supabase
       .from("category_schedules")
-      .select("*, category:categories(id, name, name_si, name_ta, slug), radio_channel:radio_channels(id, name, name_si, name_ta, frequency, frequency_2, logo_url)")
+      .select("*, category:categories(id, name, slug), radio_channel:radio_channels(id, name, frequency, frequency_2, logo_url)")
       .order("display_order")
       .order("start_time");
 
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
         is_daily: isDaily,
         display_order: body.display_order ?? 0,
       })
-      .select("*, category:categories(id, name, name_si, name_ta), radio_channel:radio_channels(id, name, name_si, name_ta)")
+      .select("*, category:categories(id, name), radio_channel:radio_channels(id, name)")
       .single();
 
     if (error) throw error;

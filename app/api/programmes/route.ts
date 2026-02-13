@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from("audio_programmes")
-      .select("*, category:categories(*), subcategory:subcategories(*), radio_channel:radio_channels(*)", usePagination ? { count: "exact" } : undefined)
+      .select("*, category:categories(*, radio_channel:radio_channels(*)), subcategory:subcategories(*)", usePagination ? { count: "exact" } : undefined)
       .order(orderBy.column, { ascending: orderBy.ascending, nullsFirst: false })
       .range(offset, offset + limit - 1);
 
@@ -55,9 +55,17 @@ export async function GET(request: Request) {
       }
       query = query.eq("created_by_user_id", session.userId);
     }
+    if (session?.roleName !== "Admin") {
+      query = query.eq("enabled", true);
+    }
     if (categoryId) query = query.eq("category_id", categoryId);
     if (subcategoryId) query = query.eq("subcategory_id", subcategoryId);
-    if (radioChannelId) query = query.eq("radio_channel_id", radioChannelId);
+    if (radioChannelId) {
+      const { data: catIds } = await supabase.from("categories").select("id").eq("radio_channel_id", radioChannelId);
+      const ids = (catIds ?? []).map((r) => r.id);
+      if (ids.length > 0) query = query.in("category_id", ids);
+      else query = query.eq("category_id", "00000000-0000-0000-0000-000000000000");
+    }
     if (dateFrom) query = query.gte("broadcasted_date", dateFrom);
     if (dateTo) query = query.lte("broadcasted_date", dateTo);
     if (search) {
@@ -81,10 +89,13 @@ export async function GET(request: Request) {
         const catIds = (catRes.data ?? []).map((r) => r.id);
         const subIds = (subRes.data ?? []).map((r) => r.id);
         const chanIds = (chanRes.data ?? []).map((r) => r.id);
+        const catIdsByChannel = chanIds.length > 0
+          ? (await supabase.from("categories").select("id").in("radio_channel_id", chanIds)).data ?? []
+          : [];
 
         for (const id of catIds) orParts.push(`category_id.eq.${id}`);
         for (const id of subIds) orParts.push(`subcategory_id.eq.${id}`);
-        for (const id of chanIds) orParts.push(`radio_channel_id.eq.${id}`);
+        for (const r of catIdsByChannel) orParts.push(`category_id.eq.${r.id}`);
 
         query = query.or(orParts.join(","));
       }
@@ -139,6 +150,7 @@ export async function POST(request: Request) {
     const { data, error } = await supabase
       .from("audio_programmes")
       .insert({
+        enabled: true,
         title,
         slug,
         broadcasted_date: body.broadcasted_date,
@@ -146,7 +158,6 @@ export async function POST(request: Request) {
         description: body.description || null,
         category_id: body.category_id || null,
         subcategory_id: body.subcategory_id || null,
-        radio_channel_id: body.radio_channel_id || null,
         firebase_storage_url: firebaseStorageUrl,
         firebase_storage_path: firebaseStoragePath,
         file_size_bytes: body.file_size_bytes ?? null,

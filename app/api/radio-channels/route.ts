@@ -42,8 +42,6 @@ export async function POST(request: Request) {
       .from("radio_channels")
       .insert({
         name,
-        name_si: (body.name_si as string)?.trim() ?? "",
-        name_ta: (body.name_ta as string)?.trim() ?? "",
         frequency: (body.frequency as string)?.trim() || null,
         frequency_2: (body.frequency_2 as string)?.trim() || null,
         logo_url: (body.logo_url as string)?.trim() || null,

@@ -12,7 +12,7 @@ export async function GET(
     const { id } = await params;
     const { data, error } = await supabase
       .from("categories")
-      .select("*")
+      .select("*, radio_channel:radio_channels(*)")
       .eq("id", id)
       .single();
 
@@ -43,14 +43,13 @@ export async function PATCH(
     if (!session) throw new Error("No session");
     const { id } = await params;
     const body = await request.json();
-    const updates: { name?: string; name_si?: string; name_ta?: string; slug?: string; display_order?: number } = {};
+    const updates: { name?: string; slug?: string; display_order?: number; radio_channel_id?: string | null } = {};
 
     if (body.name !== undefined) updates.name = body.name;
-    if (body.name_si !== undefined) updates.name_si = (body.name_si as string)?.trim() ?? "";
-    if (body.name_ta !== undefined) updates.name_ta = (body.name_ta as string)?.trim() ?? "";
     if (body.slug !== undefined) updates.slug = body.slug;
     else if (body.name) updates.slug = slugify(body.name);
     if (body.display_order !== undefined) updates.display_order = body.display_order;
+    if (body.radio_channel_id !== undefined) updates.radio_channel_id = body.radio_channel_id || null;
 
     const { data, error } = await supabase
       .from("categories")

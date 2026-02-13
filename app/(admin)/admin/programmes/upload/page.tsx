@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/date-picker";
 import { slugify } from "@/lib/validations";
-import type { Category, Subcategory, RadioChannel } from "@/lib/types";
+import type { Category, Subcategory } from "@/lib/types";
 
 const MAX_SIZE = 100 * 1024 * 1024; // 100MB
 
@@ -26,10 +26,8 @@ export default function UploadPage() {
   const [user, setUser] = useState<{ role: string; assigned_category_ids?: string[]; assigned_subcategory_ids?: string[] } | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [radioChannels, setRadioChannels] = useState<RadioChannel[]>([]);
   const [categoryId, setCategoryId] = useState<string>("");
   const [subcategoryId, setSubcategoryId] = useState<string>("");
-  const [radioChannelId, setRadioChannelId] = useState<string>("");
   const [title, setTitle] = useState("");
   const [broadcastedDate, setBroadcastedDate] = useState("");
   const [repeatBroadcastedDate, setRepeatBroadcastedDate] = useState("");
@@ -67,13 +65,6 @@ export default function UploadPage() {
       setSubcategoryId("");
     }
   }, [categoryId]);
-
-  useEffect(() => {
-    fetch("/api/radio-channels")
-      .then((r) => r.json())
-      .then((d) => setRadioChannels(d))
-      .catch(() => setRadioChannels([]));
-  }, []);
 
   // Live SEO auto-fill from title and description
   useEffect(() => {
@@ -180,7 +171,6 @@ export default function UploadPage() {
           description: description.trim() || null,
           category_id: categoryId || null,
           subcategory_id: subcategoryId || null,
-          radio_channel_id: radioChannelId || null,
           firebase_storage_path: path,
           file_size_bytes: file.size,
           seo_title: seoTitle.trim() || null,
@@ -320,29 +310,6 @@ export default function UploadPage() {
                   {filteredSubcategories.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Broadcasted Radio Channel</Label>
-              <Select
-                value={radioChannelId || "__none__"}
-                onValueChange={(v) => setRadioChannelId(v === "__none__" ? "" : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select channel (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {radioChannels.map((ch) => (
-                    <SelectItem key={ch.id} value={ch.id}>
-                      {ch.name}
-                      {[ch.frequency, ch.frequency_2].filter(Boolean).length > 0
-                        ? ` (${[ch.frequency, ch.frequency_2].filter(Boolean).join(" / ")})`
-                        : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

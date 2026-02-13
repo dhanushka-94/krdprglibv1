@@ -45,16 +45,12 @@ export async function PATCH(
     const body = await request.json();
     const updates: {
       name?: string;
-      name_si?: string;
-      name_ta?: string;
       slug?: string;
       category_id?: string;
       display_order?: number;
     } = {};
 
     if (body.name !== undefined) updates.name = body.name;
-    if (body.name_si !== undefined) updates.name_si = (body.name_si as string)?.trim() ?? "";
-    if (body.name_ta !== undefined) updates.name_ta = (body.name_ta as string)?.trim() ?? "";
     if (body.slug !== undefined) updates.slug = body.slug;
     else if (body.name) updates.slug = slugify(body.name);
     if (body.category_id !== undefined) updates.category_id = body.category_id;

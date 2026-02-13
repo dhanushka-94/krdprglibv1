@@ -15,15 +15,18 @@ export async function GET(
     const { id } = await params;
     const { data, error } = await supabase
       .from("audio_programmes")
-      .select("*, category:categories(*), subcategory:subcategories(*), radio_channel:radio_channels(*)")
+      .select("*, category:categories(*, radio_channel:radio_channels(*)), subcategory:subcategories(*)")
       .eq("id", id)
       .single();
 
     if (error) throw error;
     if (!data) return NextResponse.json(null, { status: 404 });
 
-    // Programme Manager: may only access programmes in their assigned categories/subcategories
     const session = await getSession();
+    if (data.enabled === false && session?.roleName !== "Admin") {
+      return NextResponse.json(null, { status: 404 });
+    }
+    // Programme Manager: may only access programmes in their assigned categories/subcategories
     if (session?.roleName === "Programme Manager") {
       const allowed = await canUploadTo(
         session.userId,
@@ -102,7 +105,7 @@ export async function PATCH(
       description?: string | null;
       category_id?: string | null;
       subcategory_id?: string | null;
-      radio_channel_id?: string | null;
+      enabled?: boolean;
       firebase_storage_url?: string;
       firebase_storage_path?: string;
       file_size_bytes?: number | null;
@@ -121,7 +124,6 @@ export async function PATCH(
     if (body.description !== undefined) updates.description = body.description;
     if (body.category_id !== undefined) updates.category_id = body.category_id;
     if (body.subcategory_id !== undefined) updates.subcategory_id = body.subcategory_id;
-    if (body.radio_channel_id !== undefined) updates.radio_channel_id = body.radio_channel_id;
     if (body.firebase_storage_path !== undefined) updates.firebase_storage_path = body.firebase_storage_path;
     if (body.firebase_storage_url !== undefined) updates.firebase_storage_url = body.firebase_storage_url;
     else if (body.firebase_storage_path) {
@@ -132,12 +134,13 @@ export async function PATCH(
     if (body.seo_title !== undefined) updates.seo_title = body.seo_title;
     if (body.seo_description !== undefined) updates.seo_description = body.seo_description;
     if (body.seo_keywords !== undefined) updates.seo_keywords = body.seo_keywords;
+    if (session.roleName === "Admin" && body.enabled !== undefined) updates.enabled = !!body.enabled;
 
     const { data, error } = await supabase
       .from("audio_programmes")
       .update(updates)
       .eq("id", id)
-      .select()
+      .select("*, category:categories(*, radio_channel:radio_channels(*)), subcategory:subcategories(*)")
       .single();
 
     if (error) throw error;

@@ -39,8 +39,6 @@ function RadioChannelsContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RadioChannel | null>(null);
   const [name, setName] = useState("");
-  const [nameSi, setNameSi] = useState("");
-  const [nameTa, setNameTa] = useState("");
   const [frequency, setFrequency] = useState("");
   const [frequency2, setFrequency2] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
@@ -70,8 +68,6 @@ function RadioChannelsContent() {
   const openCreate = () => {
     setEditing(null);
     setName("");
-    setNameSi("");
-    setNameTa("");
     setFrequency("");
     setFrequency2("");
     setLogoUrl("");
@@ -81,8 +77,6 @@ function RadioChannelsContent() {
   const openEdit = (c: RadioChannel) => {
     setEditing(c);
     setName(c.name);
-    setNameSi(c.name_si ?? "");
-    setNameTa(c.name_ta ?? "");
     setFrequency(c.frequency ?? "");
     setFrequency2(c.frequency_2 ?? "");
     setLogoUrl(c.logo_url ?? "");
@@ -96,8 +90,6 @@ function RadioChannelsContent() {
     try {
       const payload = {
         name: name.trim(),
-        name_si: nameSi.trim(),
-        name_ta: nameTa.trim(),
         frequency: frequency.trim() || null,
         frequency_2: frequency2.trim() || null,
         logo_url: logoUrl.trim() || null,
@@ -240,9 +232,7 @@ function RadioChannelsContent() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[60px]">Logo</TableHead>
-                    <TableHead>Name (EN)</TableHead>
-                    <TableHead>Name (SI)</TableHead>
-                    <TableHead>Name (TA)</TableHead>
+                    <TableHead>Name</TableHead>
                     <TableHead>Frequency 1</TableHead>
                     <TableHead>Frequency 2</TableHead>
                     <TableHead className="w-[120px]">Actions</TableHead>
@@ -266,8 +256,6 @@ function RadioChannelsContent() {
                         )}
                       </TableCell>
                       <TableCell>{c.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{c.name_si || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{c.name_ta || "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{c.frequency || "—"}</TableCell>
                       <TableCell className="text-muted-foreground">{c.frequency_2 || "—"}</TableCell>
                       <TableCell>
@@ -343,32 +331,12 @@ function RadioChannelsContent() {
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="rc-name">Name (English)</Label>
+                <Label htmlFor="rc-name">Name</Label>
                 <Input
                   id="rc-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Sri Lanka Broadcasting Corporation"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="rc-name-si">Name (සිංහල)</Label>
-                <Input
-                  id="rc-name-si"
-                  value={nameSi}
-                  onChange={(e) => setNameSi(e.target.value)}
-                  placeholder="e.g. ශ්‍රී ලංකා ගුවන් විදුලි සංස්ථාව"
-                  dir="ltr"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="rc-name-ta">Name (தமிழ்)</Label>
-                <Input
-                  id="rc-name-ta"
-                  value={nameTa}
-                  onChange={(e) => setNameTa(e.target.value)}
-                  placeholder="e.g. இலங்கை ஒலிபரப்புக் கூட்டுத்தாபனம்"
-                  dir="ltr"
                 />
               </div>
               <div className="grid gap-2">

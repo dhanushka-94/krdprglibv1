@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CalendarDays } from "lucide-react";
+import { ArrowLeft, CalendarDays, Radio } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getSession } from "@/lib/auth-session";
 import { getAdminPath } from "@/lib/config";
@@ -12,7 +12,6 @@ import ProgrammePlayer from "./player";
 import { ProgrammeShareSocial } from "@/components/programme-share-social";
 import { LikeButton } from "@/components/like-button";
 import { CategoryScheduleBlock } from "@/components/category-schedule-block";
-import { ProgrammeMetaLine, ChannelDisplay } from "@/components/programme-detail-meta";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -21,13 +20,18 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const decodedSlug = normalizeProgrammeSlug(slug);
-  const { data } = await supabase
-    .from("audio_programmes")
-    .select("title, seo_title, seo_description, seo_keywords, description")
-    .eq("slug", decodedSlug)
-    .single();
+  const { getSession } = await import("@/lib/auth-session");
+  const session = await getSession();
+  const isAdmin = session?.roleName === "Admin";
 
-  if (!data) return { title: "Not Found" };
+  let query = supabase
+    .from("audio_programmes")
+    .select("title, seo_title, seo_description, seo_keywords, description, enabled")
+    .eq("slug", decodedSlug);
+  if (!isAdmin) query = query.eq("enabled", true);
+  const { data } = await query.single();
+
+  if (!data || (data.enabled === false && !isAdmin)) return { title: "Not Found" };
 
   const title = data.seo_title || data.title;
   const description =
@@ -55,21 +59,21 @@ export default async function ProgrammeDetailPage({ params }: Props) {
   const { slug } = await params;
   const decodedSlug = normalizeProgrammeSlug(slug);
 
-  const { data: programme, error } = await supabase
+  const session = await getSession();
+  const isAdmin = session?.roleName === "Admin";
+
+  let query = supabase
     .from("audio_programmes")
-    .select("*, category:categories(*), subcategory:subcategories(*), radio_channel:radio_channels(*)")
-    .eq("slug", decodedSlug)
-    .single();
+    .select("*, category:categories(*, radio_channel:radio_channels(*)), subcategory:subcategories(*)")
+    .eq("slug", decodedSlug);
+  if (!isAdmin) query = query.eq("enabled", true);
+  const { data: programme, error } = await query.single();
 
   if (error || !programme) notFound();
-
-  const session = await getSession();
-  const category = programme.category as { id?: string; name: string; name_si?: string; name_ta?: string } | null;
-  const subcategory = programme.subcategory as { name: string; name_si?: string; name_ta?: string } | null;
-  const radioChannel = programme.radio_channel as {
+  const category = programme.category as { id?: string; name: string; radio_channel?: { name: string; frequency: string | null; frequency_2: string | null; logo_url: string | null } } | null;
+  const subcategory = programme.subcategory as { name: string } | null;
+  const radioChannel = (category?.radio_channel ?? null) as {
     name: string;
-    name_si?: string;
-    name_ta?: string;
     frequency: string | null;
     frequency_2: string | null;
     logo_url: string | null;
@@ -81,6 +85,7 @@ export default async function ProgrammeDetailPage({ params }: Props) {
     ? formatDateOnlyDisplay(programme.repeat_broadcasted_date) || programme.repeat_broadcasted_date
     : null;
   const durationStr = formatDurationSeconds(programme.duration_seconds);
+  const categoryLabel = [category?.name, subcategory?.name].filter(Boolean).join(" · ") || "Programme";
 
   const headersList = await headers();
   const host = headersList.get("x-forwarded-host") ?? headersList.get("host") ?? "";
@@ -103,12 +108,11 @@ export default async function ProgrammeDetailPage({ params }: Props) {
         <h1 className="text-xl font-bold text-foreground sm:text-2xl leading-snug">
           {programme.title}
         </h1>
-        <ProgrammeMetaLine
-          category={category}
-          subcategory={subcategory}
-          dateStr={dateStr}
-          durationStr={durationStr}
-        />
+        <p className="mt-1 text-sm text-muted-foreground">
+          {categoryLabel}
+          {dateStr ? ` · ${dateStr}` : ""}
+          {durationStr ? ` · ${durationStr}` : ""}
+        </p>
       </div>
 
       {/* Audio player – main focus */}
@@ -152,7 +156,24 @@ export default async function ProgrammeDetailPage({ params }: Props) {
             </span>
           )}
           {radioChannel && (
-            <ChannelDisplay channel={radioChannel} />
+            <span className="inline-flex items-center gap-2">
+              {radioChannel.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={radioChannel.logo_url}
+                  alt=""
+                  className="size-6 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <Radio className="size-4 shrink-0" />
+              )}
+              <span>
+                {radioChannel.name}
+                {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).length > 0 && (
+                  <> · {[radioChannel.frequency, radioChannel.frequency_2].filter(Boolean).join(", ")}</>
+                )}
+              </span>
+            </span>
           )}
         </div>
       )}

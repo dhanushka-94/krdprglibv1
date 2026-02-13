@@ -1,20 +1,18 @@
 export interface Category {
   id: string;
   name: string;
-  name_si: string;
-  name_ta: string;
   slug: string;
   display_order: number;
+  radio_channel_id?: string | null;
   created_at: string;
   updated_at: string;
+  radio_channel?: RadioChannel | null;
 }
 
 export interface Subcategory {
   id: string;
   category_id: string;
   name: string;
-  name_si: string;
-  name_ta: string;
   slug: string;
   display_order: number;
   created_at: string;
@@ -25,8 +23,6 @@ export interface Subcategory {
 export interface RadioChannel {
   id: string;
   name: string;
-  name_si: string;
-  name_ta: string;
   frequency: string | null;
   frequency_2: string | null;
   logo_url: string | null;
@@ -35,14 +31,13 @@ export interface RadioChannel {
   updated_at: string;
 }
 
-export type Lang = "en" | "si" | "ta";
-
 export interface AudioProgramme {
   id: string;
   title: string;
   slug: string;
   broadcasted_date: string;
   repeat_broadcasted_date: string | null;
+  enabled?: boolean;
   description: string | null;
   category_id: string | null;
   subcategory_id: string | null;
@@ -55,8 +50,6 @@ export interface AudioProgramme {
   seo_keywords: string | null;
   created_at: string;
   updated_at: string;
-  radio_channel_id?: string | null;
   category?: Category | null;
   subcategory?: Subcategory | null;
-  radio_channel?: RadioChannel | null;
 }

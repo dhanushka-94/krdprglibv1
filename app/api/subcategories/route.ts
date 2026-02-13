@@ -52,8 +52,6 @@ export async function POST(request: Request) {
       .insert({
         category_id: categoryId,
         name,
-        name_si: (body.name_si as string)?.trim() ?? "",
-        name_ta: (body.name_ta as string)?.trim() ?? "",
         slug,
         display_order: body.display_order ?? 0,
       })

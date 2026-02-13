@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarClock, Radio } from "lucide-react";
-import { useLanguage } from "@/lib/language-context";
-import { localizedName } from "@/lib/lang-utils";
 
 type ScheduleItem = {
   id: string;
@@ -14,7 +12,7 @@ type ScheduleItem = {
   start_time: string;
   end_time: string;
   is_daily: boolean;
-  radio_channel?: { id: string; name: string; name_si?: string; name_ta?: string; frequency?: string; frequency_2?: string; logo_url?: string };
+  radio_channel?: { id: string; name: string; frequency?: string; frequency_2?: string; logo_url?: string };
 };
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -44,7 +42,6 @@ export function CategoryScheduleBlock({
   categoryName,
   className,
 }: CategoryScheduleBlockProps) {
-  const { lang } = useLanguage();
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,7 +70,7 @@ export function CategoryScheduleBlock({
           <li key={s.id} className="flex flex-wrap items-center gap-2 text-sm">
             <span className="inline-flex items-center gap-1.5 text-muted-foreground">
               <Radio className="size-4 shrink-0" />
-              {localizedName(s.radio_channel, lang) || "Channel"}
+              {(s.radio_channel as { name?: string })?.name ?? "Channel"}
             </span>
             <span className="text-foreground">{formatSlot(s)}</span>
           </li>

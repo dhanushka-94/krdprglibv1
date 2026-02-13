@@ -12,11 +12,9 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Music, Search, Play, X, Youtube, Facebook, Radio, Newspaper, FolderTree, ChevronLeft, ChevronRight, CalendarClock } from "lucide-react";
+import { Music, Search, Play, X, Youtube, Facebook, Radio, Newspaper, FolderTree, ChevronLeft, ChevronRight, CalendarClock, Globe } from "lucide-react";
 import { formatDateOnlyDisplay } from "@/lib/date-utils";
 import { useNowPlaying } from "@/lib/now-playing-context";
-import { useLanguage } from "@/lib/language-context";
-import { localizedName } from "@/lib/lang-utils";
 import { ShareDownloadButtons } from "@/components/share-download-buttons";
 import type { AudioProgramme, Category, Subcategory, RadioChannel } from "@/lib/types";
 
@@ -26,7 +24,6 @@ type SortOption = "newest" | "oldest" | "title";
 
 export function ProgrammesList() {
   const { play: playTrack } = useNowPlaying();
-  const { lang } = useLanguage();
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [programmes, setProgrammes] = useState<
@@ -196,7 +193,26 @@ export function ProgrammesList() {
               ගහකොල අතරේ හුස්ම හොයනා රෙඩියෝ යාත්‍රිකයා
             </p>
           </div>
-          <div className="flex flex-wrap gap-3 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <a
+              href="https://krushiradio.lk/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              <Globe className="size-4 shrink-0" />
+              Krushi Radio
+            </a>
+            <a
+              href="https://www.krushiradionews.lk/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              <Newspaper className="size-4 shrink-0" />
+              Krushi Radio News
+            </a>
+            <span className="hidden h-5 w-px bg-border sm:inline-block" aria-hidden />
             <Link
               href="/schedule"
               className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary hover:underline"
@@ -230,15 +246,6 @@ export function ProgrammesList() {
             >
               <Facebook className="size-4 shrink-0" />
               Facebook
-            </a>
-            <a
-              href="https://www.krushiradionews.lk/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 hover:text-amber-800 hover:underline"
-            >
-              <Newspaper className="size-4 shrink-0" />
-              News Magazine
             </a>
           </div>
         </div>
@@ -274,7 +281,7 @@ export function ProgrammesList() {
                     : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {localizedName(c, lang)}
+                {c.name}
               </button>
             ))}
           </div>
@@ -303,7 +310,7 @@ export function ProgrammesList() {
                       : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  {localizedName(s, lang)}
+                  {s.name}
                 </button>
               ))}
             </div>
@@ -339,7 +346,7 @@ export function ProgrammesList() {
                       : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  {localizedName(ch, lang)}
+                  {ch.name}
                 </button>
               ))}
             </div>
@@ -450,8 +457,8 @@ export function ProgrammesList() {
           {sortedProgrammes.map((p) => {
             const cat = p.category as Category | undefined;
             const sub = p.subcategory as Subcategory | undefined;
-            const channel = p.radio_channel as RadioChannel | undefined;
-            const categoryLabel = [localizedName(cat, lang), localizedName(sub, lang)].filter(Boolean).join(" · ") || "Programme";
+            const channel = (p.category as { radio_channel?: RadioChannel })?.radio_channel;
+            const categoryLabel = [cat?.name, sub?.name].filter(Boolean).join(" · ") || "Programme";
             const dateStr = formatDateOnlyDisplay(p.broadcasted_date) || p.broadcasted_date;
             const repeatDateStr = p.repeat_broadcasted_date
               ? formatDateOnlyDisplay(p.repeat_broadcasted_date) || p.repeat_broadcasted_date
@@ -533,7 +540,7 @@ export function ProgrammesList() {
                         />
                       ) : null}
                       <span className="text-xs font-medium text-foreground truncate">
-                        {localizedName(channel, lang)}
+                        {channel.name}
                         {[channel.frequency, channel.frequency_2].filter(Boolean).length > 0
                           ? " · " + [channel.frequency, channel.frequency_2].filter(Boolean).join(" · ")
                           : ""}

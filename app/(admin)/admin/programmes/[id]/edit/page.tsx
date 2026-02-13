@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/date-picker";
 import { AudioPlayer } from "@/components/audio-player";
-import type { AudioProgramme, Category, Subcategory, RadioChannel } from "@/lib/types";
+import type { AudioProgramme, Category, Subcategory } from "@/lib/types";
 
 export default function EditProgrammePage() {
   const router = useRouter();
@@ -26,10 +26,8 @@ export default function EditProgrammePage() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [radioChannels, setRadioChannels] = useState<RadioChannel[]>([]);
   const [categoryId, setCategoryId] = useState<string>("");
   const [subcategoryId, setSubcategoryId] = useState<string>("");
-  const [radioChannelId, setRadioChannelId] = useState<string>("");
   const [title, setTitle] = useState("");
   const [broadcastedDate, setBroadcastedDate] = useState("");
   const [repeatBroadcastedDate, setRepeatBroadcastedDate] = useState("");
@@ -56,7 +54,6 @@ export default function EditProgrammePage() {
         setDescription(data.description ?? "");
         setCategoryId(data.category_id ?? "");
         setSubcategoryId(data.subcategory_id ?? "");
-        setRadioChannelId((data as AudioProgramme).radio_channel_id ?? "");
         setSeoTitle(data.seo_title ?? "");
         setSeoDescription(data.seo_description ?? "");
         setSeoKeywords(data.seo_keywords ?? "");
@@ -71,13 +68,6 @@ export default function EditProgrammePage() {
       .then((r) => r.json())
       .then((d) => setCategories(d))
       .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    fetch("/api/radio-channels")
-      .then((r) => r.json())
-      .then((d) => setRadioChannels(d))
-      .catch(() => setRadioChannels([]));
   }, []);
 
   useEffect(() => {
@@ -197,7 +187,6 @@ export default function EditProgrammePage() {
         description: description.trim() || null,
         category_id: categoryId || null,
         subcategory_id: subcategoryId || null,
-        radio_channel_id: radioChannelId || null,
         seo_title: seoTitle.trim() || null,
         seo_description: seoDescription.trim() || null,
         seo_keywords: seoKeywords.trim() || null,
@@ -362,29 +351,6 @@ export default function EditProgrammePage() {
                   {subcategories.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid gap-2">
-              <Label>Broadcasted Radio Channel</Label>
-              <Select
-                value={radioChannelId || "__none__"}
-                onValueChange={(v) => setRadioChannelId(v === "__none__" ? "" : v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select channel (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {radioChannels.map((ch) => (
-                    <SelectItem key={ch.id} value={ch.id}>
-                      {ch.name}
-                      {[ch.frequency, ch.frequency_2].filter(Boolean).length > 0
-                        ? ` (${[ch.frequency, ch.frequency_2].filter(Boolean).join(" / ")})`
-                        : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

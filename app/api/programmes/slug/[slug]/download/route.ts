@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { normalizeProgrammeSlug } from "@/lib/slug-utils";
+import { getSession } from "@/lib/auth-session";
 
 export async function GET(
   _request: Request,
@@ -9,11 +10,15 @@ export async function GET(
   try {
     const { slug } = await params;
     const normalizedSlug = normalizeProgrammeSlug(slug);
-    const { data: programme, error } = await supabase
+    const session = await getSession();
+    const isAdmin = session?.roleName === "Admin";
+
+    let query = supabase
       .from("audio_programmes")
-      .select("firebase_storage_url, slug, title")
-      .eq("slug", normalizedSlug)
-      .single();
+      .select("firebase_storage_url, slug, title, enabled")
+      .eq("slug", normalizedSlug);
+    if (!isAdmin) query = query.eq("enabled", true);
+    const { data: programme, error } = await query.single();
 
     if (error || !programme?.firebase_storage_url) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

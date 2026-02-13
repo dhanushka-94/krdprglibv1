@@ -21,8 +21,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import type { Category } from "@/lib/types";
+import type { Category, RadioChannel } from "@/lib/types";
 import { AdminOnlyGuard } from "@/components/admin-only-guard";
 
 export default function CategoriesPage() {
@@ -37,11 +44,11 @@ function CategoriesContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [radioChannels, setRadioChannels] = useState<RadioChannel[]>([]);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [name, setName] = useState("");
-  const [nameSi, setNameSi] = useState("");
-  const [nameTa, setNameTa] = useState("");
   const [slug, setSlug] = useState("");
+  const [radioChannelId, setRadioChannelId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const fetchCategories = async () => {
@@ -61,21 +68,26 @@ function CategoriesContent() {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    fetch("/api/radio-channels")
+      .then((r) => r.json())
+      .then((d) => setRadioChannels(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
+
   const openCreate = () => {
     setEditingCategory(null);
     setName("");
-    setNameSi("");
-    setNameTa("");
     setSlug("");
+    setRadioChannelId("");
     setDialogOpen(true);
   };
 
   const openEdit = (c: Category) => {
     setEditingCategory(c);
     setName(c.name);
-    setNameSi(c.name_si ?? "");
-    setNameTa(c.name_ta ?? "");
     setSlug(c.slug);
+    setRadioChannelId(c.radio_channel_id ?? "");
     setDialogOpen(true);
   };
 
@@ -97,7 +109,7 @@ function CategoriesContent() {
     if (!name.trim()) return;
     setSubmitting(true);
     try {
-      const payload = { name: name.trim(), name_si: nameSi.trim(), name_ta: nameTa.trim(), slug: slug.trim() || slugify(name) };
+      const payload = { name: name.trim(), slug: slug.trim() || slugify(name), radio_channel_id: radioChannelId || null };
       const url = editingCategory
         ? `/api/categories/${editingCategory.id}`
         : "/api/categories";
@@ -161,9 +173,8 @@ function CategoriesContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name (EN)</TableHead>
-                  <TableHead>Name (SI)</TableHead>
-                  <TableHead>Name (TA)</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Radio Channel</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
                 </TableRow>
@@ -172,8 +183,7 @@ function CategoriesContent() {
                 {categories.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>{c.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{c.name_si || "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">{c.name_ta || "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">{(c.radio_channel as RadioChannel)?.name ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{c.slug}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -213,7 +223,7 @@ function CategoriesContent() {
           <form onSubmit={handleSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Name (English)</Label>
+                <Label htmlFor="name">Name</Label>
                 <Input
                   id="name"
                   value={name}
@@ -222,24 +232,21 @@ function CategoriesContent() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="name_si">Name (සිංහල)</Label>
-                <Input
-                  id="name_si"
-                  value={nameSi}
-                  onChange={(e) => setNameSi(e.target.value)}
-                  placeholder="කාණ්ඩයේ නම"
-                  dir="ltr"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="name_ta">Name (தமிழ்)</Label>
-                <Input
-                  id="name_ta"
-                  value={nameTa}
-                  onChange={(e) => setNameTa(e.target.value)}
-                  placeholder="வகை பெயர்"
-                  dir="ltr"
-                />
+                <Label htmlFor="radio_channel">Radio Channel</Label>
+                <Select value={radioChannelId || "__none__"} onValueChange={(v) => setRadioChannelId(v === "__none__" ? "" : v)}>
+                  <SelectTrigger id="radio_channel">
+                    <SelectValue placeholder="Select channel (optional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {radioChannels.map((ch) => (
+                      <SelectItem key={ch.id} value={ch.id}>
+                        {ch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">Programmes in this category will show this channel.</p>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="slug">Slug</Label>

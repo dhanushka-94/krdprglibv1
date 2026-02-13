@@ -9,7 +9,7 @@ export async function GET(
     const { slug } = await params;
     const { data, error } = await supabase
       .from("audio_programmes")
-      .select("*, category:categories(*), subcategory:subcategories(*), radio_channel:radio_channels(*)")
+      .select("*, category:categories(*, radio_channel:radio_channels(*)), subcategory:subcategories(*)")
       .eq("slug", slug)
       .single();
 

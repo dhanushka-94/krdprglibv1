@@ -477,7 +477,7 @@ function ProgrammeReport() {
       formatDateOnlyDisplay(p.broadcasted_date) || p.broadcasted_date,
       (p.category as Category)?.name ?? "",
       (p.subcategory as Subcategory)?.name ?? "",
-      (p.radio_channel as RadioChannel)?.name ?? "",
+      (p.category as { radio_channel?: RadioChannel })?.radio_channel?.name ?? "",
       p.slug,
     ]);
     const csv = [headers.join(","), ...rows.map((r) => r.map(escapeCsv).join(","))].join("\n");
@@ -585,7 +585,7 @@ function ProgrammeReport() {
                     <TableCell>{formatDateOnlyDisplay(p.broadcasted_date) || p.broadcasted_date}</TableCell>
                     <TableCell>{(p.category as Category)?.name ?? "—"}</TableCell>
                     <TableCell>{(p.subcategory as Subcategory)?.name ?? "—"}</TableCell>
-                    <TableCell>{(p.radio_channel as RadioChannel)?.name ?? "—"}</TableCell>
+                    <TableCell>{(p.category as { radio_channel?: RadioChannel })?.radio_channel?.name ?? "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
