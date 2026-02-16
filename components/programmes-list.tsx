@@ -33,6 +33,7 @@ export function ProgrammesList() {
   >([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [radioChannels, setRadioChannels] = useState<RadioChannel[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [subcategoryFilter, setSubcategoryFilter] = useState<string>("all");
   const [radioChannelFilter, setRadioChannelFilter] = useState<string>("all");
@@ -78,6 +79,10 @@ export function ProgrammesList() {
       .then((r) => r.json())
       .then((d) => setCategories(d))
       .catch(() => {});
+    fetch("/api/radio-channels")
+      .then((r) => r.json())
+      .then((d) => setRadioChannels(Array.isArray(d) ? d : []))
+      .catch(() => setRadioChannels([]));
   }, [mounted]);
 
   useEffect(() => {
@@ -329,6 +334,41 @@ export function ProgrammesList() {
           )}
         </div>
 
+        {radioChannels.length > 0 && (
+          <div className="space-y-3 pt-3 border-t border-border/60">
+            <div className="flex items-center gap-2">
+              <Radio className="size-4 text-primary shrink-0" />
+              <p className="text-sm font-semibold text-foreground">Where We Broadcast</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setRadioChannelFilter("all")}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
+                  radioChannelFilter === "all"
+                    ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                All channels
+              </button>
+              {radioChannels.map((ch) => (
+                <button
+                  key={ch.id}
+                  type="button"
+                  onClick={() => setRadioChannelFilter(ch.id)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
+                    radioChannelFilter === ch.id
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                      : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {ch.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Search (auto search – queries Supabase as you type), dates, sort */}
