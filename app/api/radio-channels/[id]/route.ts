@@ -42,12 +42,14 @@ export async function PATCH(
     if (!session) throw new Error("No session");
     const { id } = await params;
     const body = await request.json();
-    const updates: { name?: string; frequency?: string | null; frequency_2?: string | null; logo_url?: string | null; display_order?: number } = {};
+    const updates: { name?: string; frequency?: string | null; frequency_2?: string | null; logo_url?: string | null; stream_url?: string | null; description?: string | null; display_order?: number } = {};
 
     if (body.name !== undefined) updates.name = (body.name as string)?.trim();
     if (body.frequency !== undefined) updates.frequency = (body.frequency as string)?.trim() || null;
     if (body.frequency_2 !== undefined) updates.frequency_2 = (body.frequency_2 as string)?.trim() || null;
     if (body.logo_url !== undefined) updates.logo_url = (body.logo_url as string)?.trim() || null;
+    if (body.stream_url !== undefined) updates.stream_url = (body.stream_url as string)?.trim() || null;
+    if (body.description !== undefined) updates.description = (body.description as string)?.trim() || null;
     if (body.display_order !== undefined) updates.display_order = body.display_order;
 
     const { data, error } = await supabase

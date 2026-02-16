@@ -220,14 +220,20 @@ export function ProgrammesList() {
               <CalendarClock className="size-4 shrink-0" />
               Schedule
             </Link>
+            <Link
+              href="/listen"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 hover:underline"
+            >
+              <Radio className="size-4 shrink-0" />
+              Listen Live
+            </Link>
             <a
               href="https://player.krushiradio.lk/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary hover:underline"
             >
-              <Radio className="size-4 shrink-0" />
-              Listen live
+              Krushi Player
             </a>
             <a
               href="https://www.youtube.com/@KrushiRadio"
@@ -336,18 +342,28 @@ export function ProgrammesList() {
                 All channels
               </button>
               {radioChannels.map((ch) => (
-                <button
-                  key={ch.id}
-                  type="button"
-                  onClick={() => setRadioChannelFilter(ch.id)}
-                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
-                    radioChannelFilter === ch.id
-                      ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                      : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  {ch.name}
-                </button>
+                <div key={ch.id} className="inline-flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setRadioChannelFilter(ch.id)}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
+                      radioChannelFilter === ch.id
+                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                        : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {ch.name}
+                  </button>
+                  {ch.stream_url?.trim() && (
+                    <Link
+                      href={`/listen/${ch.id}`}
+                      className="rounded-full px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
+                      title={`Listen to ${ch.name} live`}
+                    >
+                      Listen
+                    </Link>
+                  )}
+                </div>
               ))}
             </div>
           </div>

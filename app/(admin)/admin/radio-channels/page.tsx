@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, Radio, Upload } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Pencil, Trash2, Radio } from "lucide-react";
 import type { RadioChannel } from "@/lib/types";
 import { AdminOnlyGuard } from "@/components/admin-only-guard";
 
@@ -42,9 +43,10 @@ function RadioChannelsContent() {
   const [frequency, setFrequency] = useState("");
   const [frequency2, setFrequency2] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  const [streamUrl, setStreamUrl] = useState("");
+  const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
-  const [uploadLogoChannel, setUploadLogoChannel] = useState<RadioChannel | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const createLogoInputRef = useRef<HTMLInputElement>(null);
 
@@ -71,6 +73,8 @@ function RadioChannelsContent() {
     setFrequency("");
     setFrequency2("");
     setLogoUrl("");
+    setStreamUrl("");
+    setDescription("");
     setDialogOpen(true);
   };
 
@@ -80,6 +84,8 @@ function RadioChannelsContent() {
     setFrequency(c.frequency ?? "");
     setFrequency2(c.frequency_2 ?? "");
     setLogoUrl(c.logo_url ?? "");
+    setStreamUrl(c.stream_url ?? "");
+    setDescription(c.description ?? "");
     setDialogOpen(true);
   };
 
@@ -93,6 +99,8 @@ function RadioChannelsContent() {
         frequency: frequency.trim() || null,
         frequency_2: frequency2.trim() || null,
         logo_url: logoUrl.trim() || null,
+        stream_url: streamUrl.trim() || null,
+        description: description.trim() || null,
       };
       const url = editing ? `/api/radio-channels/${editing.id}` : "/api/radio-channels";
       const method = editing ? "PATCH" : "POST";
@@ -123,6 +131,7 @@ function RadioChannelsContent() {
             await fetch(`/api/radio-channels/${channelId}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
+              credentials: "include",
               body: JSON.stringify({ logo_url: upData.url }),
             });
           }
@@ -150,16 +159,24 @@ function RadioChannelsContent() {
       const res = await fetch("/api/radio-channels/upload-logo", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
       const data = await res.json();
-      if (res.ok) {
-        setChannels((prev) =>
-          prev.map((c) => (c.id === channelId ? { ...c, logo_url: data.url } : c))
-        );
-        if (editing?.id === channelId) setLogoUrl(data.url);
-        if (uploadLogoChannel?.id === channelId) setUploadLogoChannel(null);
-        toast.success("Logo uploaded");
-        return true;
+      if (res.ok && data.url) {
+        const patchRes = await fetch(`/api/radio-channels/${channelId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ logo_url: data.url }),
+        });
+        if (patchRes.ok) {
+          setChannels((prev) =>
+            prev.map((c) => (c.id === channelId ? { ...c, logo_url: data.url } : c))
+          );
+          if (editing?.id === channelId) setLogoUrl(data.url);
+          toast.success("Logo uploaded and saved");
+          return true;
+        }
       }
       toast.error(data.error || "Upload failed");
       return false;
@@ -177,15 +194,6 @@ function RadioChannelsContent() {
     if (!input?.files?.length) return;
     await uploadLogoForChannel(editing.id, input.files[0]);
     input.value = "";
-  };
-
-  const handleRowLogoUpload = async () => {
-    if (!uploadLogoChannel?.id) return;
-    const input = document.getElementById("upload-logo-row-file") as HTMLInputElement;
-    if (!input?.files?.length) return;
-    await uploadLogoForChannel(uploadLogoChannel.id, input.files[0]);
-    input.value = "";
-    setUploadLogoChannel(null);
   };
 
   const handleDelete = async (id: string) => {
@@ -260,14 +268,6 @@ function RadioChannelsContent() {
                       <TableCell className="text-muted-foreground">{c.frequency_2 || "—"}</TableCell>
                       <TableCell>
                         <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setUploadLogoChannel(c)}
-                            title="Upload logo"
-                          >
-                            <Upload className="size-4" />
-                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
                             <Pencil className="size-4" />
                           </Button>
@@ -289,39 +289,6 @@ function RadioChannelsContent() {
           )}
         </CardContent>
       </Card>
-
-      {/* Upload logo (row) dialog */}
-      <Dialog open={!!uploadLogoChannel} onOpenChange={(open) => !open && setUploadLogoChannel(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Upload logo</DialogTitle>
-            {uploadLogoChannel && (
-              <p className="text-sm text-muted-foreground">
-                {uploadLogoChannel.name}
-              </p>
-            )}
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <input
-              id="upload-logo-row-file"
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
-              className="w-full text-sm"
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setUploadLogoChannel(null)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleRowLogoUpload}
-                disabled={uploadingLogo}
-              >
-                {uploadingLogo ? "Uploading…" : "Upload"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -356,6 +323,29 @@ function RadioChannelsContent() {
                   onChange={(e) => setFrequency2(e.target.value)}
                   placeholder="e.g. 101.2 MHz"
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="rc-stream">Stream URL</Label>
+                <Input
+                  id="rc-stream"
+                  type="url"
+                  value={streamUrl}
+                  onChange={(e) => setStreamUrl(e.target.value)}
+                  placeholder="e.g. http://220.247.227.20:8000/kandystream"
+                />
+                <p className="text-xs text-muted-foreground">Web streaming URL for live listen (optional)</p>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="rc-description">Description</Label>
+                <Textarea
+                  id="rc-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="About this channel (shown on the listen page)"
+                  rows={3}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">Optional. Displayed on the radio player page.</p>
               </div>
               <div className="grid gap-2">
                 <Label>Logo</Label>

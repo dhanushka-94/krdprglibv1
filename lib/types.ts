@@ -26,6 +26,8 @@ export interface RadioChannel {
   frequency: string | null;
   frequency_2: string | null;
   logo_url: string | null;
+  stream_url: string | null;
+  description: string | null;
   display_order: number;
   created_at: string;
   updated_at: string;

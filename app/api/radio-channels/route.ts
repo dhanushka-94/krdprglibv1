@@ -45,6 +45,8 @@ export async function POST(request: Request) {
         frequency: (body.frequency as string)?.trim() || null,
         frequency_2: (body.frequency_2 as string)?.trim() || null,
         logo_url: (body.logo_url as string)?.trim() || null,
+        stream_url: (body.stream_url as string)?.trim() || null,
+        description: (body.description as string)?.trim() || null,
         display_order: body.display_order ?? 0,
       })
       .select()
