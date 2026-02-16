@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -25,13 +25,14 @@ type SortOption = "newest" | "oldest" | "title";
 export function ProgrammesList() {
   const { play: playTrack } = useNowPlaying();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [programmes, setProgrammes] = useState<
     (AudioProgramme & { category?: Category; subcategory?: Subcategory })[]
   >([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
-  const [radioChannels, setRadioChannels] = useState<RadioChannel[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [subcategoryFilter, setSubcategoryFilter] = useState<string>("all");
   const [radioChannelFilter, setRadioChannelFilter] = useState<string>("all");
@@ -53,6 +54,8 @@ export function ProgrammesList() {
     if (!mounted) return;
     const catId = searchParams.get("category_id");
     if (catId) setCategoryFilter(catId);
+    const chId = searchParams.get("radio_channel_id");
+    setRadioChannelFilter(chId || "all");
   }, [mounted, searchParams]);
 
   /* Auto search: debounce typing and run server-side search (Supabase) without loading all data */
@@ -75,10 +78,6 @@ export function ProgrammesList() {
       .then((r) => r.json())
       .then((d) => setCategories(d))
       .catch(() => {});
-    fetch("/api/radio-channels")
-      .then((r) => r.json())
-      .then((d) => setRadioChannels(Array.isArray(d) ? d : []))
-      .catch(() => setRadioChannels([]));
   }, [mounted]);
 
   useEffect(() => {
@@ -152,6 +151,7 @@ export function ProgrammesList() {
     setSearch("");
     setSearchInput("");
     setPage(1);
+    router.replace(pathname || "/");
   };
 
   const handleQuickPlay = (e: React.MouseEvent, p: AudioProgramme & { category?: Category; subcategory?: Subcategory }) => {
@@ -221,10 +221,16 @@ export function ProgrammesList() {
               Schedule
             </Link>
             <Link
+              href="/radio-channels"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary hover:underline"
+            >
+              <Radio className="size-4 shrink-0" />
+              Radio Channels
+            </Link>
+            <Link
               href="/listen"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-red-600 hover:text-red-700 hover:underline"
             >
-              <Radio className="size-4 shrink-0" />
               Listen Live
             </Link>
             <a
@@ -323,51 +329,6 @@ export function ProgrammesList() {
           )}
         </div>
 
-        {radioChannels.length > 0 && (
-          <div className="space-y-3 pt-3 border-t border-border/60">
-            <div className="flex items-center gap-2">
-              <Radio className="size-4 text-primary shrink-0" />
-              <p className="text-sm font-semibold text-foreground">Where We Broadcast</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setRadioChannelFilter("all")}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
-                  radioChannelFilter === "all"
-                    ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                All channels
-              </button>
-              {radioChannels.map((ch) => (
-                <div key={ch.id} className="inline-flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setRadioChannelFilter(ch.id)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
-                      radioChannelFilter === ch.id
-                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                        : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    {ch.name}
-                  </button>
-                  {ch.stream_url?.trim() && (
-                    <Link
-                      href={`/listen/${ch.id}`}
-                      className="rounded-full px-2 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
-                      title={`Listen to ${ch.name} live`}
-                    >
-                      Listen
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Search (auto search – queries Supabase as you type), dates, sort */}
