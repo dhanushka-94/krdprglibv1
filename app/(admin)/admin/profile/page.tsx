@@ -79,7 +79,7 @@ export default function ProfilePage() {
   useEffect(() => {
     Promise.all([
       fetch("/api/users/me", { credentials: "include" }).then((r) => r.json()),
-      fetch("/api/programmes?created_by=me", { credentials: "include" }).then((r) => r.json()),
+      fetch("/api/programmes?scope=admin&created_by=me", { credentials: "include" }).then((r) => r.json()),
     ])
       .then(([meData, programmes]) => {
         if (meData.profile) {

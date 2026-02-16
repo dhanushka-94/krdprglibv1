@@ -16,6 +16,7 @@ export async function GET(request: Request) {
     const dateTo = searchParams.get("date_to");
     const search = searchParams.get("search")?.trim();
     const createdByMe = searchParams.get("created_by") === "me";
+    const scopeAdmin = searchParams.get("scope") === "admin";
     const limitParam = searchParams.get("limit");
     const offsetParam = searchParams.get("offset");
     const orderParam = searchParams.get("order") || "newest";
@@ -35,10 +36,10 @@ export async function GET(request: Request) {
       .order(orderBy.column, { ascending: orderBy.ascending, nullsFirst: false })
       .range(offset, offset + limit - 1);
 
-    // Programme Manager: restrict to assigned categories/subcategories only
+    // Programme Manager: restrict to assigned categories only in admin context (Manage Programmes)
     const { getSession } = await import("@/lib/auth-session");
     const session = await getSession();
-    if (session?.roleName === "Programme Manager") {
+    if (scopeAdmin && session?.roleName === "Programme Manager") {
       const { categoryIds, subcategoryIds } = await getUserAssignments(session.userId);
       if (categoryIds.length === 0 && subcategoryIds.length === 0) {
         return NextResponse.json([]);

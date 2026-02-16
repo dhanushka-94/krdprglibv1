@@ -77,6 +77,7 @@ export default function ProgrammesAdminPage() {
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams();
+    params.set("scope", "admin");
     if (categoryFilter !== "all") params.set("category_id", categoryFilter);
     if (subcategoryFilter !== "all") params.set("subcategory_id", subcategoryFilter);
     if (radioChannelFilter !== "all") params.set("radio_channel_id", radioChannelFilter);

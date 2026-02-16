@@ -455,6 +455,7 @@ function ProgrammeReport() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
+      params.set("scope", "admin");
       if (dateFrom) params.set("date_from", dateFrom);
       if (dateTo) params.set("date_to", dateTo);
       if (categoryFilter !== "all") params.set("category_id", categoryFilter);
