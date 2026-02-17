@@ -42,6 +42,7 @@ export default function CategoriesPage() {
 
 function CategoriesContent() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [radioChannels, setRadioChannels] = useState<RadioChannel[]>([]);
@@ -66,6 +67,13 @@ function CategoriesContent() {
 
   useEffect(() => {
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/programmes/counts-by-category")
+      .then((r) => r.json())
+      .then((d) => setCategoryCounts(typeof d === "object" && d !== null ? d : {}))
+      .catch(() => setCategoryCounts({}));
   }, []);
 
   useEffect(() => {
@@ -174,6 +182,7 @@ function CategoriesContent() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Programmes</TableHead>
                   <TableHead>Radio Channel</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead className="w-[120px]">Actions</TableHead>
@@ -183,6 +192,11 @@ function CategoriesContent() {
                 {categories.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>{c.name}</TableCell>
+                    <TableCell>
+                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-semibold text-primary">
+                        {categoryCounts[c.id] ?? 0}
+                      </span>
+                    </TableCell>
                     <TableCell className="text-muted-foreground">{(c.radio_channel as RadioChannel)?.name ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">{c.slug}</TableCell>
                     <TableCell>
