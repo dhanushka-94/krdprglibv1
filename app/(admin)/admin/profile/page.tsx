@@ -334,10 +334,10 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FolderTree className="size-5" />
-                Programmes by category
+                Your categories (permitted only)
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Programme counts for your accessible categories
+                All categories you have access to, with programme counts. Click to view programmes.
               </p>
             </CardHeader>
             <CardContent>
