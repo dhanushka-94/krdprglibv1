@@ -32,6 +32,7 @@ export function ProgrammesList() {
     (AudioProgramme & { category?: Category; subcategory?: Subcategory })[]
   >([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [radioChannels, setRadioChannels] = useState<RadioChannel[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -83,6 +84,10 @@ export function ProgrammesList() {
       .then((r) => r.json())
       .then((d) => setRadioChannels(Array.isArray(d) ? d : []))
       .catch(() => setRadioChannels([]));
+    fetch("/api/programmes/counts-by-category")
+      .then((r) => r.json())
+      .then((d) => setCategoryCounts(typeof d === "object" && d !== null ? d : {}))
+      .catch(() => setCategoryCounts({}));
   }, [mounted]);
 
   useEffect(() => {
@@ -279,28 +284,37 @@ export function ProgrammesList() {
             <button
               type="button"
               onClick={() => setCategoryFilter("all")}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm flex items-center gap-1.5 ${
                 categoryFilter === "all"
                   ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
                   : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              All
+              <span>All</span>
+              <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${categoryFilter === "all" ? "bg-primary-foreground/20" : "bg-muted"}`}>
+                {Object.values(categoryCounts).reduce((a, b) => a + b, 0)}
+              </span>
             </button>
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setCategoryFilter(c.id)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm ${
-                  categoryFilter === c.id
-                    ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                    : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {c.name}
-              </button>
-            ))}
+            {categories.map((c) => {
+              const count = categoryCounts[c.id] ?? 0;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setCategoryFilter(c.id)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-all shadow-sm flex items-center gap-1.5 ${
+                    categoryFilter === c.id
+                      ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                      : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <span>{c.name}</span>
+                  <span className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${categoryFilter === c.id ? "bg-primary-foreground/20" : "bg-muted"}`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
           {categoryFilter !== "all" && subcategories.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 pl-6 border-l-2 border-primary/20">
