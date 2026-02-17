@@ -104,6 +104,10 @@ export default function UploadPage() {
       toast.error("Title, broadcasted date, and MP3 file are required");
       return;
     }
+    if (!categoryId) {
+      toast.error("Category is required");
+      return;
+    }
 
     setSubmitting(true);
     setUploadProgress(0);
@@ -279,10 +283,10 @@ export default function UploadPage() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Category</Label>
+              <Label>Category *</Label>
               <Select value={categoryId || "__none__"} onValueChange={(v) => { setCategoryId(v === "__none__" ? "" : v); setSubcategoryId(""); }}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category (optional)" />
+                  <SelectValue placeholder="Select category (required)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">None</SelectItem>

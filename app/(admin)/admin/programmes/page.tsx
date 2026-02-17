@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { getAdminPath } from "@/lib/config";
 import { formatDateOnlyDisplay, formatDurationSeconds } from "@/lib/date-utils";
@@ -29,6 +30,7 @@ import type { AudioProgramme, Category, Subcategory, RadioChannel } from "@/lib/
 type SortOption = "newest" | "oldest" | "title";
 
 export default function ProgrammesAdminPage() {
+  const searchParams = useSearchParams();
   const [programmes, setProgrammes] = useState<
     (AudioProgramme & { category?: Category & { radio_channel?: RadioChannel }; subcategory?: Subcategory })[]
   >([]);
@@ -46,6 +48,12 @@ export default function ProgrammesAdminPage() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [isAdmin, setIsAdmin] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Initial filter from URL
+  useEffect(() => {
+    const catId = searchParams.get("category_id");
+    if (catId) setCategoryFilter(catId);
+  }, [searchParams]);
 
   // Debounce search
   useEffect(() => {

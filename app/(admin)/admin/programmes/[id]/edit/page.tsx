@@ -120,6 +120,10 @@ export default function EditProgrammePage() {
       toast.error("Title and broadcasted date are required");
       return;
     }
+    if (!categoryId) {
+      toast.error("Category is required");
+      return;
+    }
 
     setSubmitting(true);
     setUploadStatus("idle");
@@ -317,13 +321,13 @@ export default function EditProgrammePage() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Category</Label>
+              <Label>Category *</Label>
               <Select
                 value={categoryId || "__none__"}
                 onValueChange={(v) => setCategoryId(v === "__none__" ? "" : v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select category (optional)" />
+                  <SelectValue placeholder="Select category (required)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">None</SelectItem>

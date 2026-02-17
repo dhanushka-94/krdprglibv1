@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Music, Activity, Pencil, ChevronRight, Lock } from "lucide-react";
+import { User, Music, Activity, Pencil, ChevronRight, Lock, FolderTree } from "lucide-react";
 import { getAdminPath } from "@/lib/config";
 import { formatDateSriLanka } from "@/lib/date-utils";
 
@@ -44,6 +44,7 @@ interface ProfileData {
     created_at: string;
   };
   programmes_uploaded_count: number;
+  category_wise_counts?: Array<{ category_id: string; category_name: string; count: number }>;
   recent_activity: Array<{
     id: string;
     action: string;
@@ -179,7 +180,7 @@ export default function ProfilePage() {
     );
   }
 
-  const { profile, programmes_uploaded_count, recent_activity } = data;
+  const { profile, programmes_uploaded_count, category_wise_counts, recent_activity } = data;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -327,6 +328,40 @@ export default function ProfilePage() {
             </form>
           </CardContent>
         </Card>
+
+        {category_wise_counts && category_wise_counts.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FolderTree className="size-5" />
+                Programmes by category
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Programme counts for your accessible categories
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {category_wise_counts.map((c) => (
+                  <li key={c.category_id}>
+                    <Link
+                      href={`${getAdminPath("programmes")}?category_id=${c.category_id}`}
+                      className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2 text-sm transition-colors hover:bg-muted/50"
+                    >
+                      <span className="font-medium">{c.category_name}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 font-semibold text-primary">
+                          {c.count} programme{c.count !== 1 ? "s" : ""}
+                        </span>
+                        <ChevronRight className="size-4 text-muted-foreground" />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
