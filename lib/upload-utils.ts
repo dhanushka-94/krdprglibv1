@@ -1,8 +1,8 @@
-/** Sanitize for use in storage filename: letters, numbers, hyphens, underscores only. */
+/** Sanitize for use in storage filename. Allows Unicode letters (e.g. Sinhala), numbers, hyphens, spaces. */
 export function sanitizeForFilename(s: string): string {
   return (s || "")
     .trim()
-    .replace(/[^a-zA-Z0-9\s-]/g, "")
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
     .replace(/\s+/g, "_")
     .replace(/_+/g, "_")
     .replace(/^-+|-+$/g, "") || "Uncategorized";
